@@ -27,6 +27,12 @@
     <ClInclude Include="ScoreWindow.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="ConfigWindow.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadBoardWindow.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -42,6 +48,12 @@
       <Filter>資源檔</Filter>
     </ClCompile>
     <ClCompile Include="ScoreWindow.cpp">
+      <Filter>資源檔</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigWindow.cpp">
+      <Filter>資源檔</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadWindow.cpp">
       <Filter>資源檔</Filter>
     </ClCompile>
   </ItemGroup>
