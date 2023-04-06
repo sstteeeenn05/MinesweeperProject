@@ -17,7 +17,7 @@ void Board::calculateAnswerByInput(std::ifstream &inputFile) {
         for (int j = 0; j < column; j++) {
             if (inputFile.get() == 'X') {
                 answerBoard[i][j] = 'X';
-                plus1AroundTheMine(j, i);
+                plusOneAroundTheMine(j, i);
             }
         }
         inputFile.get();
@@ -32,13 +32,13 @@ void Board::randomTheBoard(double randomRate) {
         for (int j = 0; j < column; j++) {
             if (generator() % 100 + 1 < mineRange) {
                 answerBoard[i][j] = 'X';
-                plus1AroundTheMine(j, i);
+                plusOneAroundTheMine(j, i);
             }
         }
     }
 }
 
-void Board::plus1AroundTheMine(int x, int y) {
+void Board::plusOneAroundTheMine(int x, int y) {
     for (int i = y - 1; i <= y + 1; i++) {
         for (int j = x - 1; j <= x + 1; j++) {
             if (isCoordinateValid(j, i) && answerBoard[i][j] != 'X') {
@@ -57,7 +57,10 @@ Board::Board() = default;
 Board::Board(std::ifstream &inputFile) {
     inputFile >> row >> column;
     inputFile.get();
-    if (row <= 0 && column <= 0) throw std::exception();
+    if (row <= 0 && column <= 0) {
+        inputFile.close();
+        throw std::exception();
+    }
     initializeBoards();
     calculateAnswerByInput(inputFile);
     inputFile.close();
@@ -87,7 +90,7 @@ Board::Board(int inputRow, int inputColumn, int mineCount) : row(inputRow), colu
         for (int j = 0; j < column; j++) {
             if (tempBoard[i*row+j]=='X') {
                 answerBoard[i][j] = 'X';
-                plus1AroundTheMine(j, i);
+                plusOneAroundTheMine(j, i);
             }
         }
     }
