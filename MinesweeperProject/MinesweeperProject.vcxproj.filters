@@ -27,10 +27,7 @@
     <ClInclude Include="RankWindow.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="ConfigWindow.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="CustomDataType.h">
+    <ClInclude Include="DataType.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>
@@ -48,9 +45,6 @@
       <Filter>資源檔</Filter>
     </ClCompile>
     <ClCompile Include="RankWindow.cpp">
-      <Filter>資源檔</Filter>
-    </ClCompile>
-    <ClCompile Include="ConfigWindow.cpp">
       <Filter>資源檔</Filter>
     </ClCompile>
   </ItemGroup>

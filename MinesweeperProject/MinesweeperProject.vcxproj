@@ -134,15 +134,13 @@
   <ItemGroup>
     <ClInclude Include="Board.h" />
     <ClInclude Include="BoardWindow.h" />
-    <ClInclude Include="ConfigWindow.h" />
-    <ClInclude Include="CustomDataType.h" />
+    <ClInclude Include="DataType.h" />
     <ClInclude Include="HomeWindow.h" />
     <ClInclude Include="RankWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
     <ClCompile Include="BoardWindow.cpp" />
-    <ClCompile Include="ConfigWindow.cpp" />
     <ClCompile Include="HomeWindow.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RankWindow.cpp" />

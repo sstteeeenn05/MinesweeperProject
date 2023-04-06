@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CustomDataType.h"
+#include "DataType.h"
 
 #include "FL/Fl.h"
 #include "FL/Fl_Window.h"
