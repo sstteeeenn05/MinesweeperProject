@@ -20,7 +20,11 @@ void Board::calculateAnswerByInput(std::ifstream &inputFile) {
                 plusOneAroundTheMine(j, i);
             }
         }
-        inputFile.get();
+        // check column count is valid
+        if(inputFile.get()!='\n' && !inputFile.eof()) throw std::exception();
+
+        // check row count is valid
+        if(inputFile.eof() && i!=row-1) throw std::exception();
     }
 }
 
@@ -102,4 +106,12 @@ int Board::getRow() const {
 
 int Board::getColumn() const {
     return column;
+}
+
+std::vector<std::vector<char>> Board::getAnswer() const {
+    return answerBoard;
+}
+
+std::vector<std::vector<char>> Board::getCurrentBoard() const {
+    return board;
 }

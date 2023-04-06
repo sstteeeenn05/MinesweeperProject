@@ -17,13 +17,13 @@ private:
 
     void randomTheBoard(double randomRate);
 
-    void plus1AroundTheMine(int x, int y);
+    void plusOneAroundTheMine(int x, int y);
 
     bool isCoordinateValid(int x, int y) const;
 
 public:
 
-    //TODO: 1.print info 2.leftClick and rightClick
+    //TODO: 1.leftClick and rightClick
      
     Board();
 
@@ -36,5 +36,9 @@ public:
     int getRow() const;
 
     int getColumn() const;
+
+    std::vector<std::vector<char>> getAnswer() const;
+
+    std::vector<std::vector<char>> getCurrentBoard() const;
 
 };
