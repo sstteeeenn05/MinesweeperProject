@@ -21,26 +21,45 @@ HomeWindow::HomeWindow() {
 		system("start https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 	});
 
-	gameArgs->radioArgs = radioArgs;
-
+	initVariables();
 	initRadios();
 	initRadioReadBoard();
-	initRadioRandom();
+	initRadioInput();
 	initButtons();
-
-	((Fl_Radio_Round_Button*)radioArgs->buttons[RADIO_READ_BOARD])->do_callback();
-	((Fl_Radio_Round_Button*)radioArgs->buttons[RADIO_READ_BOARD])->take_focus();
-	((Fl_Radio_Round_Button*)radioArgs->buttons[RADIO_READ_BOARD])->set();
+	initDefaultRadio();
 
 	window->callback(HomeWindow::close);
 	window->end();
 }
 
+void HomeWindow::open() {
+	window->show();
+}
+
+void HomeWindow::initVariables() {
+	gameArgs = new GameArgs();
+	rankArgs = new RankArgs();
+	radioArgs = new RadioArgs();
+	gameArgs->radioArgs = radioArgs;
+
+	radioList = {
+		{ "Read Board File", &HomeWindow::radioCallback, (void*)radioArgs },
+		{ "Input Mine Count", &HomeWindow::radioCallback, (void*)radioArgs },
+		{ "Input Respawn Rate", &HomeWindow::radioCallback, (void*)radioArgs }
+	};
+
+	buttonList = {
+		{"New Game",&HomeWindow::startGame,(void*)gameArgs},
+		{"Leaderboard",&HomeWindow::openRank,(void*)rankArgs},
+		{"Exit",&HomeWindow::close}
+	};
+}
+
 void HomeWindow::initRadios() {
-	for (auto radio = radioList.begin(); radio != radioList.end(); radio++) {
+	for (auto &radio : radioList) {
 		static int radioCount = 0;
-		Fl_Radio_Round_Button* button = new Fl_Radio_Round_Button(MARGIN, RADIO_Y[radioCount++], RADIO_WIDTH, RADIO_HEIGHT, radio->text);
-		button->callback((Fl_Callback*)radio->callback, radioArgs);
+		Fl_Radio_Round_Button* button = new Fl_Radio_Round_Button(MARGIN, RADIO_Y[radioCount++], RADIO_WIDTH, RADIO_HEIGHT, radio.text);
+		button->callback((Fl_Callback*)radio.callback, radioArgs);
 		radioArgs->buttons.push_back(button);
 	}
 }
@@ -58,25 +77,25 @@ void HomeWindow::initRadioReadBoard() {
 	chooser->callback([](Fl_File_Chooser* c, void* args) {
 		std::string path = c->value();
 		if (path.substr(path.find_last_of(".") + 1) == "txt") {
-			RadioArgs* radioArgs = (RadioArgs*)args;
+			auto radioArgs = (RadioArgs*)args;
 			radioArgs->boardPath = path;
 			radioArgs->iptPath->value(path.c_str());
 		}
 	}, (void*)radioArgs);
 
 	btnChooser->callback([](Fl_Widget* w, void* args) {
-		RadioArgs* radioArgs = (RadioArgs*)args;
+		auto radioArgs = (RadioArgs*)args;
 		radioArgs->chooser->show();
 	}, (void*)radioArgs);
 }
 
-void HomeWindow::initRadioRandom() {
+void HomeWindow::initRadioInput() {
 	Fl_Int_Input* iptNumber = new Fl_Int_Input(RADIO_WIDTH + LABEL_WIDTH + MARGIN * 2, RADIO_Y[RADIO_INPUT_COUNT], VALUE_WIDTH, RADIO_HEIGHT, "Val:");
 	Fl_Button* btnRandom = new Fl_Button(RADIO_WIDTH + LABEL_WIDTH + VALUE_WIDTH + MARGIN * 3, RADIO_Y[RADIO_INPUT_COUNT], BTN_RANDOM_WIDTH, RADIO_HEIGHT, "Random");
 	Fl_Int_Input* iptColumn = new Fl_Int_Input(RADIO_WIDTH + LABEL_WIDTH + MARGIN * 2, RADIO_Y[RADIO_INPUT_RATE], INPUT_WIDTH, RADIO_HEIGHT, "Col:");
 	Fl_Int_Input* iptRow = new Fl_Int_Input(RADIO_WIDTH + LABEL_WIDTH * 2 + INPUT_WIDTH + MARGIN * 3, RADIO_Y[RADIO_INPUT_RATE], INPUT_WIDTH, RADIO_HEIGHT, "Row:");
 
-	iptNumber->value("25");
+	iptNumber->value("10");
 	iptColumn->value("10");
 	iptRow->value("10");
 	iptNumber->maximum_size(3);
@@ -86,10 +105,11 @@ void HomeWindow::initRadioRandom() {
 	radioArgs->iptNumber = iptNumber;
 	radioArgs->iptColumn = iptColumn;
 	radioArgs->iptRow = iptRow;
+	radioArgs->btnRandom = btnRandom;
 
 	iptNumber->callback([](Fl_Widget* w, void* args) {
-		Fl_Int_Input* input = (Fl_Int_Input*)w;
-		RadioArgs* radioArgs = (RadioArgs*)args;
+		auto input = (Fl_Int_Input*)w;
+		auto radioArgs = (RadioArgs*)args;
 		if (!radioArgs->iptNumber || !radioArgs->iptColumn || !radioArgs->iptRow) return;
 
 		if (radioArgs->selection == RADIO_INPUT_COUNT)
@@ -101,8 +121,8 @@ void HomeWindow::initRadioRandom() {
 	}, (void*)radioArgs);
 
 	auto iptSizeCallback = [](Fl_Widget* w, void* args) {
-		Fl_Int_Input* input = (Fl_Int_Input*)w;
-		RadioArgs* radioArgs = (RadioArgs*)args;
+		auto input = (Fl_Int_Input*)w;
+		auto radioArgs = (RadioArgs*)args;
 
 		radioArgs->col = max(min(std::stoi(radioArgs->iptColumn->value()), MAX_COL), 1);
 		radioArgs->row = max(min(std::stoi(radioArgs->iptRow->value()), MAX_ROW), 1);
@@ -115,9 +135,10 @@ void HomeWindow::initRadioRandom() {
 	iptRow->callback(iptSizeCallback, (void*)radioArgs);
 
 	btnRandom->callback([](Fl_Widget* w, void* args) {
-		RadioArgs* radioArgs = (RadioArgs*)args;
+		auto radioArgs = (RadioArgs*)args;
 		if (!radioArgs->iptNumber || !radioArgs->iptColumn || !radioArgs->iptRow) return;
 
+		srand(time(NULL));
 		if (radioArgs->selection==RADIO_INPUT_COUNT)
 			radioArgs->number = rand() % (radioArgs->col * radioArgs->row) + 1;
 		if (radioArgs->selection == RADIO_INPUT_RATE)
@@ -127,69 +148,88 @@ void HomeWindow::initRadioRandom() {
 	}, (void*)radioArgs);
 }
 
+void HomeWindow::initDefaultRadio(){
+	auto radioReadBoard = (Fl_Radio_Round_Button*)radioArgs->buttons[RADIO_READ_BOARD];
+	radioReadBoard->do_callback();
+	radioReadBoard->take_focus();
+	radioReadBoard->set();
+}
+
 void HomeWindow::radioCallback(Fl_Widget* w, void* args) {
-	Fl_Radio_Round_Button* radio = (Fl_Radio_Round_Button*)w;
-	RadioArgs* radioArgs = (RadioArgs*)args;
+	auto radio = (Fl_Radio_Round_Button*)w;
+	auto radioArgs = (RadioArgs*)args;
 	auto itr = std::find(radioArgs->buttons.begin(), radioArgs->buttons.end(), radio);
 	if (itr == radioArgs->buttons.end()) return;
 	int index = std::distance(radioArgs->buttons.begin(), itr);
 	radioArgs->selection = index;
 	switch (index) {
 		case RADIO_READ_BOARD:
-			if (radioArgs->iptNumber) radioArgs->iptNumber->deactivate();
-			if (radioArgs->iptColumn) radioArgs->iptColumn->deactivate();
-			if (radioArgs->iptRow) radioArgs->iptRow->deactivate();
-			if (radioArgs->iptPath) radioArgs->iptPath->activate();
-			if (radioArgs->btnChooser) radioArgs->btnChooser->activate();
+			radioArgs->iptPath->activate();
+			radioArgs->btnChooser->activate();
+			radioArgs->iptNumber->deactivate();
+			radioArgs->iptColumn->deactivate();
+			radioArgs->iptRow->deactivate();
+			radioArgs->btnRandom->deactivate();
 			break;
 		case RADIO_INPUT_COUNT:
 		case RADIO_INPUT_RATE:
-			if (radioArgs->iptNumber) {
-				if (index == RADIO_INPUT_COUNT) radioArgs->iptNumber->label("Count:");
-				if (index == RADIO_INPUT_RATE) radioArgs->iptNumber->label("Rate:");
-				radioArgs->iptNumber->activate();
-			}
-			if (radioArgs->iptColumn) radioArgs->iptColumn->activate();
-			if (radioArgs->iptRow) radioArgs->iptRow->activate();
-			if (radioArgs->iptPath) radioArgs->iptPath->deactivate();
-			if (radioArgs->btnChooser) radioArgs->btnChooser->deactivate();
+			radioArgs->iptPath->deactivate();
+			radioArgs->btnChooser->deactivate();
+			if (index == RADIO_INPUT_COUNT) radioArgs->iptNumber->label("Count:");
+			if (index == RADIO_INPUT_RATE) radioArgs->iptNumber->label("Rate(%):");
+			radioArgs->iptNumber->activate();
+			radioArgs->iptColumn->activate();
+			radioArgs->iptRow->activate();
+			radioArgs->btnRandom->activate();
 			break;
 	}
+	radioArgs->iptNumber->do_callback();
 }
 
 void HomeWindow::initButtons() {
-	for (auto button = buttonList.begin(); button != buttonList.end(); button++) {
+	for (auto &button : buttonList) {
 		static int buttonIndex = 0;
-		Fl_Button* component = new Fl_Button(MARGIN + (MARGIN + BUTTON_WIDTH) * (buttonIndex++), BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, button->text);
-		button->component = component;
-		GenericArgs* genericArgs = (GenericArgs*)(button->args);
+		Fl_Button* component = new Fl_Button(MARGIN + (MARGIN + BUTTON_WIDTH) * (buttonIndex++), BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, button.text);
+		button.component = component;
+		auto genericArgs = (GenericArgs*)button.args;
 		if (genericArgs) genericArgs->button = component;
-		button->component->callback((Fl_Callback*)button->callback, button->args);
+		button.component->callback((Fl_Callback*)button.callback, button.args);
 	}
 }
 
 void HomeWindow::startGame(Fl_Widget* w, void* args) {
-	GameArgs* gameArgs = (GameArgs*)args;
-	RadioArgs* radioArgs = gameArgs->radioArgs;
-	if (gameArgs->board) delete gameArgs->board;
+	auto gameArgs = (GameArgs*)args;
+	auto radioArgs = gameArgs->radioArgs;
+	radioArgs->iptNumber->do_callback();
+
 	try {
 		switch (radioArgs->selection) {
 			case RADIO_READ_BOARD: {
+				if(!strlen(radioArgs->iptPath->value())) throw std::exception("Please select a board file or try another mode");
 				std::ifstream file(radioArgs->iptPath->value());
+				if (!file.is_open()) throw std::exception("The board file does not exist");
 				gameArgs->board = new Board(file);
+				break;
 			} case RADIO_INPUT_COUNT: {
 				gameArgs->board = new Board(std::stoi(radioArgs->iptRow->value()), std::stoi(radioArgs->iptColumn->value()), std::stoi(radioArgs->iptNumber->value()));
+				break;
 			} case RADIO_INPUT_RATE: {
-
-			}
+				gameArgs->board = new Board(std::stoi(radioArgs->iptRow->value()), std::stoi(radioArgs->iptColumn->value()), (double)std::stoi(radioArgs->iptNumber->value()) / 100);
+				break;
+			} default: throw std::exception("Logic error");
 		}
-	} catch (std::exception e) { return; }
+	} catch (std::exception e) {
+		fl_alert(e.what());
+		return;
+	}
 
-	if (gameArgs->window && gameArgs->window->isOpen) return;
-	gameArgs->window = new BoardWindow(gameArgs->board->getColumn(), gameArgs->board->getRow());
-	BoardWindow* boardWindow = (BoardWindow*)gameArgs->window;
-	boardWindow->args = gameArgs;
+	gameArgs->window = new BoardWindow(gameArgs->board);
+	auto boardWindow = (BoardWindow*)gameArgs->window;
 	boardWindow->window->show();
+
+	gameArgs = new GameArgs();
+	radioArgs = new RadioArgs();
+	gameArgs->radioArgs = radioArgs;
 }
 
 void HomeWindow::openRank(Fl_Widget* w, void* args) {

@@ -14,14 +14,7 @@
 #include "FL/Fl_Window.h"
 
 #define MAX_COL 50
-#define MAX_ROW 50
-
-enum {
-	RADIO_READ_BOARD,
-	RADIO_INPUT_COUNT,
-	RADIO_INPUT_RATE,
-	RADIO_COUNT
-};
+#define MAX_ROW 30
 
 class HomeWindow{
 	const int WINDOW_WIDTH = 400;
@@ -45,24 +38,21 @@ class HomeWindow{
 public:
 	Fl_Button* logo = nullptr;
 	Fl_Window* window = nullptr;
-	GameArgs* gameArgs = new GameArgs();
-	RankArgs* rankArgs = new RankArgs();
-	RadioArgs* radioArgs = new RadioArgs();
-	std::vector<Widget> radioList = { 
-		{ "Read Board File", &HomeWindow::radioCallback, (void*)radioArgs },
-		{ "Input Mine Count", &HomeWindow::radioCallback, (void*)radioArgs },
-		{ "Input Respawn Rate", &HomeWindow::radioCallback, (void*)radioArgs } };
-	std::vector<Widget> buttonList = {
-		{"New Game",&HomeWindow::startGame,(void*)gameArgs},
-		{"Leaderboard",&HomeWindow::openRank,(void*)rankArgs},
-		{"Exit",&HomeWindow::close}
-	};
+	GameArgs* gameArgs = nullptr;
+	RankArgs* rankArgs = nullptr;
+	RadioArgs* radioArgs = nullptr;
+	std::vector<Widget> radioList;
+	std::vector<Widget> buttonList;
 	HomeWindow();
 
+	void open();
+
+	void initVariables();
 	void initRadios();
 	void initRadioReadBoard();
-	void initRadioRandom();
+	void initRadioInput();
 	void initButtons();
+	void initDefaultRadio();
 
 	static void radioCallback(Fl_Widget*, void*);
 	static void startGame(Fl_Widget*, void*);

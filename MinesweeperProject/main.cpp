@@ -5,6 +5,6 @@
 
 int main(int argc, char* argv[]) {
 	HomeWindow hw;
-	hw.window->show();
-	Fl::run();
+	hw.open();
+	return Fl::run();
 }

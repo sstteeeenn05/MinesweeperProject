@@ -5,17 +5,17 @@
 
 void Board::initializeBoards() {
     boardArgs.board = std::vector<std::vector<char>>
-            (row, std::vector<char>(column, '#'));
+            (row, std::vector<char>(column, MINE_MASK));
 
     answerBoard = std::vector<std::vector<char>>
-            (row, std::vector<char>(column, '0'));
+            (row, std::vector<char>(column, MINE_NULL));
 }
 
 void Board::calculateAnswerByInput(std::ifstream &inputFile) {
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < column; j++) {
-            if (inputFile.get() == 'X') {
-                answerBoard[i][j] = 'X';
+            if (inputFile.get() == MINE_MINE) {
+                answerBoard[i][j] = MINE_MINE;
                 bombCount++;
                 plusOneAroundTheMine(j, i);
             }
@@ -35,7 +35,7 @@ void Board::randomTheBoard(double randomRate) {
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < column; j++) {
             if (generator() % 100 + 1 <= mineRange) {
-                answerBoard[i][j] = 'X';
+                answerBoard[i][j] = MINE_MINE;
                 bombCount++;
                 plusOneAroundTheMine(j, i);
             }
@@ -46,7 +46,7 @@ void Board::randomTheBoard(double randomRate) {
 void Board::plusOneAroundTheMine(int x, int y) {
     for (int i = y - 1; i <= y + 1; i++) {
         for (int j = x - 1; j <= x + 1; j++) {
-            if (isCoordinateValid(j, i) && answerBoard[i][j] != 'X') {
+            if (isCoordinateValid(j, i) && answerBoard[i][j] != MINE_MINE) {
                 answerBoard[i][j]++;
             }
         }
@@ -57,10 +57,10 @@ void Board::countBlank() {
     int tempBlankCount = 0;
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < column; j++) {
-            if ((boardArgs.board[i][j] == '#' ||
-                 boardArgs.board[i][j] == 'f' ||
-                 boardArgs.board[i][j] == '?') &&
-                answerBoard[i][j] != 'X')
+            if ((boardArgs.board[i][j] == MINE_MASK ||
+                 boardArgs.board[i][j] == MINE_FLAG ||
+                 boardArgs.board[i][j] == MINE_SUS) &&
+                answerBoard[i][j] != MINE_MINE)
                 tempBlankCount++;
         }
     }
@@ -76,8 +76,8 @@ bool Board::isCoordinateValid(int x, int y) const {
 void Board::showMine() {
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < column; j++) {
-            if (answerBoard[i][j] == 'X')
-                boardArgs.board[i][j]='X';
+            if (answerBoard[i][j] == MINE_MINE)
+                boardArgs.board[i][j]=MINE_MINE;
         }
     }
 }
@@ -93,14 +93,14 @@ void Board::revealGrid(int x, int y) {
     queue.push_back(Pos{x, y});
 
     while (!queue.empty()) {
-        if (answerBoard[queue[0].y][queue[0].x] == '0' &&
-            (boardArgs.board[queue[0].y][queue[0].x] == '#'
-             || boardArgs.board[queue[0].y][queue[0].x] == '?')) {
+        if (answerBoard[queue[0].y][queue[0].x] == MINE_NULL &&
+            (boardArgs.board[queue[0].y][queue[0].x] == MINE_MASK
+             || boardArgs.board[queue[0].y][queue[0].x] == MINE_SUS)) {
 
             for (int i = queue[0].y - 1; i <= queue[0].y + 1; i++) {
                 for (int j = queue[0].x - 1; j <= queue[0].x + 1; j++) {
                     if (isCoordinateValid(j, i)) {
-                        if((boardArgs.board[i][j] == '#' || boardArgs.board[i][j] == '?'))
+                        if((boardArgs.board[i][j] == MINE_MASK || boardArgs.board[i][j] == MINE_SUS))
                             queue.push_back(Pos{j, i});
                     }
                 }
@@ -108,7 +108,7 @@ void Board::revealGrid(int x, int y) {
 
              }
 
-        if (answerBoard[queue[0].y][queue[0].x] != 'X' && boardArgs.board[queue[0].y][queue[0].x] != 'f')
+        if (answerBoard[queue[0].y][queue[0].x] != MINE_MINE && boardArgs.board[queue[0].y][queue[0].x] != MINE_FLAG)
             boardArgs.board[queue[0].y][queue[0].x] = answerBoard[queue[0].y][queue[0].x];
 
         queue.erase(queue.begin());
@@ -150,14 +150,14 @@ Board::Board(int inputRow, int inputColumn, int mineCount) : row(inputRow), colu
     std::random_device dev;
     std::mt19937 generator(dev());
 
-    std::vector<char> tempBoard(row * column, '0');
-    std::fill_n(tempBoard.begin(), mineCount, 'X');
+    std::vector<char> tempBoard(row * column, MINE_NULL);
+    std::fill_n(tempBoard.begin(), mineCount, MINE_MINE);
     std::shuffle(tempBoard.begin(), tempBoard.end(), generator);
 
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < column; j++) {
-            if (tempBoard[i * row + j] == 'X') {
-                answerBoard[i][j] = 'X';
+            if (tempBoard[i * row + j] == MINE_MINE) {
+                answerBoard[i][j] = MINE_MINE;
                 plusOneAroundTheMine(j, i);
             }
         }
@@ -169,12 +169,12 @@ Board::Board(int inputRow, int inputColumn, int mineCount) : row(inputRow), colu
 void Board::leftClick(int x, int y) {
     if (!isCoordinateValid(x, y)) throw std::exception("X or Y out of range.");
 
-    if (boardArgs.board[y][x] == 'f') throw std::exception("Left click on flag.");
+    if (boardArgs.board[y][x] == MINE_FLAG) throw std::exception("Left click on flag.");
 
-    if(boardArgs.board[y][x]!='#' && boardArgs.board[y][x]!='?')
+    if(boardArgs.board[y][x]!=MINE_MASK && boardArgs.board[y][x]!=MINE_SUS)
         throw std::exception("Left click on clicked grid.");
 
-    if (answerBoard[y][x] == 'X') {
+    if (answerBoard[y][x] == MINE_MINE) {
         showMine();
         boardArgs.gameStatus = BOARD_STATUS_LOSE;
         return;
@@ -188,15 +188,15 @@ void Board::leftClick(int x, int y) {
 
 void Board::rightClick(int x, int y) {
     if (!isCoordinateValid(x, y)) throw std::exception("X or Y out of range.");
-    if(boardArgs.board[y][x]!='#' && boardArgs.board[y][x]!='?')
+    if(boardArgs.board[y][x]!=MINE_MASK && boardArgs.board[y][x]!=MINE_SUS && boardArgs.board[y][x] != MINE_FLAG)
         throw std::exception("Right click on clicked grid.");
     
-    constexpr char symbol[3] = {'#', 'f', '?'};
+    constexpr char symbol[3] = {MINE_MASK, MINE_FLAG, MINE_SUS};
 
     for (int i = 0; i < 3; i++) {
         if (boardArgs.board[y][x] == symbol[i]) {
             boardArgs.board[y][x] = symbol[((i == 2) ? 0 : (i + 1))];
-            if (symbol[i] == 'f') flagCount--;
+            if (symbol[i] == MINE_FLAG) flagCount--;
             else flagCount++;
             return;
         }
