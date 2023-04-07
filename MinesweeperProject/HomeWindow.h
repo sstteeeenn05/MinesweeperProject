@@ -46,7 +46,6 @@ public:
 	Fl_Button* logo = nullptr;
 	Fl_Window* window = nullptr;
 	GameArgs* gameArgs = new GameArgs();
-	ConfigArgs* configArgs = new ConfigArgs();
 	RankArgs* rankArgs = new RankArgs();
 	RadioArgs* radioArgs = new RadioArgs();
 	std::vector<Widget> radioList = { 
@@ -63,9 +62,9 @@ public:
 	void initRadios();
 	void initRadioReadBoard();
 	void initRadioRandom();
-	static void radioCallback(Fl_Widget*, void*);
 	void initButtons();
 
+	static void radioCallback(Fl_Widget*, void*);
 	static void startGame(Fl_Widget*, void*);
 	static void openRank(Fl_Widget*, void*);
 	static void close(Fl_Widget*, void*);

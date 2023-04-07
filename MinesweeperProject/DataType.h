@@ -30,7 +30,7 @@ struct RadioArgs {
 	Fl_Int_Input* iptNumber = nullptr, * iptColumn = nullptr, * iptRow = nullptr;
 	Fl_Button* btnChooser = nullptr;
 	std::string boardPath;
-	int width, height, number;
+	int row = 10, col = 10, number = 25;
 };
 
 struct GenericArgs {
@@ -40,11 +40,7 @@ struct GenericArgs {
 struct GameArgs:GenericArgs {
 	BoardWindow* window = nullptr;
 	Board* board = nullptr;
-};
-
-struct ConfigArgs:GenericArgs {
-	ConfigWindow* window = nullptr;
-	GameArgs* gameArgs;
+	RadioArgs* radioArgs = nullptr;
 };
 
 struct RankArgs :GenericArgs {

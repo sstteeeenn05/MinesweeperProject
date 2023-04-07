@@ -1,14 +1,14 @@
-#include "HomeWindow.h"
-
-#include "DataType.h"
-
-#include "FL/fl_ask.H"
-
 #include <algorithm>
 #include <cstdio>
 #include <exception>
 #include <cstdlib>
 #include <ctime>
+#include <fstream>
+
+#include "HomeWindow.h"
+#include "DataType.h"
+
+#include "FL/fl_ask.H"
 
 HomeWindow::HomeWindow() {
 
@@ -17,11 +17,17 @@ HomeWindow::HomeWindow() {
 
 	logo = new Fl_Button(MARGIN, LOGO_Y, LOGO_WIDTH, LOGO_HEIGHT);
 	logo->image((new Fl_PNG_Image("logo.png"))->copy(LOGO_WIDTH, LOGO_HEIGHT));
+	logo->callback([](Fl_Widget* w, void* args) {
+		system("start https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+	});
+
+	gameArgs->radioArgs = radioArgs;
 
 	initRadios();
 	initRadioReadBoard();
 	initRadioRandom();
 	initButtons();
+
 	((Fl_Radio_Round_Button*)radioArgs->buttons[RADIO_READ_BOARD])->do_callback();
 	((Fl_Radio_Round_Button*)radioArgs->buttons[RADIO_READ_BOARD])->take_focus();
 	((Fl_Radio_Round_Button*)radioArgs->buttons[RADIO_READ_BOARD])->set();
@@ -73,53 +79,51 @@ void HomeWindow::initRadioRandom() {
 	iptNumber->value("25");
 	iptColumn->value("10");
 	iptRow->value("10");
+	iptNumber->maximum_size(3);
+	iptColumn->maximum_size(3);
+	iptRow->maximum_size(3);
 
 	radioArgs->iptNumber = iptNumber;
 	radioArgs->iptColumn = iptColumn;
 	radioArgs->iptRow = iptRow;
 
-	iptNumber->callback((Fl_Callback*)[](Fl_Widget* w, void* args) {
+	iptNumber->callback([](Fl_Widget* w, void* args) {
 		Fl_Int_Input* input = (Fl_Int_Input*)w;
 		RadioArgs* radioArgs = (RadioArgs*)args;
 		if (!radioArgs->iptNumber || !radioArgs->iptColumn || !radioArgs->iptRow) return;
-		int res = 0;
-		if (radioArgs->selection == RADIO_INPUT_COUNT) {
-			int col = min(std::stoi(radioArgs->iptColumn->value()), MAX_COL);
-			int row = min(std::stoi(radioArgs->iptRow->value()), MAX_ROW);
-			res = col * row;
-		}
-		if (radioArgs->selection == RADIO_INPUT_RATE) res = 100;
-		if (std::stoi(input->value()) > res) input->value(std::to_string(res).c_str());
+
+		if (radioArgs->selection == RADIO_INPUT_COUNT)
+			radioArgs->number = max(min(std::stoi(input->value()), radioArgs->col * radioArgs->row), 1);
+		if (radioArgs->selection == RADIO_INPUT_RATE)
+			radioArgs->number = max(min(std::stoi(input->value()), 100), 1);
+
+		input->value(std::to_string(radioArgs->number).c_str());
 	}, (void*)radioArgs);
 
-	iptColumn->callback((Fl_Callback*)[](Fl_Widget* w, void* args) {
+	auto iptSizeCallback = [](Fl_Widget* w, void* args) {
 		Fl_Int_Input* input = (Fl_Int_Input*)w;
-		if (std::stoi(input->value()) > MAX_COL) input->value(std::to_string(MAX_COL).c_str());
-	});
+		RadioArgs* radioArgs = (RadioArgs*)args;
 
-	iptRow->callback((Fl_Callback*)[](Fl_Widget* w, void* args) {
-		Fl_Int_Input* input = (Fl_Int_Input*)w;
-		if (std::stoi(input->value()) > MAX_ROW) input->value(std::to_string(MAX_ROW).c_str());
-	});
+		radioArgs->col = max(min(std::stoi(radioArgs->iptColumn->value()), MAX_COL), 1);
+		radioArgs->row = max(min(std::stoi(radioArgs->iptRow->value()), MAX_ROW), 1);
 
-	btnRandom->callback((Fl_Callback*)[](Fl_Widget* w, void* args) {
+		radioArgs->iptColumn->value(std::to_string(radioArgs->col).c_str());
+		radioArgs->iptRow->value(std::to_string(radioArgs->row).c_str());
+		radioArgs->iptNumber->do_callback();
+	};
+	iptColumn->callback(iptSizeCallback, (void*)radioArgs);
+	iptRow->callback(iptSizeCallback, (void*)radioArgs);
+
+	btnRandom->callback([](Fl_Widget* w, void* args) {
 		RadioArgs* radioArgs = (RadioArgs*)args;
 		if (!radioArgs->iptNumber || !radioArgs->iptColumn || !radioArgs->iptRow) return;
-		int res;
-		switch (radioArgs->selection) {
-		case RADIO_INPUT_COUNT: {
-			int col = min(std::stoi(radioArgs->iptColumn->value()), MAX_COL);
-			int row = min(std::stoi(radioArgs->iptRow->value()), MAX_ROW);
-			res = rand() % (col * row) + 1;
-			break;
-		}
-		case RADIO_INPUT_RATE:
-			res = rand() % 100 + 1;
-			break;
-		default:
-			return;
-		}
-		radioArgs->iptNumber->value(std::to_string(res).c_str());
+
+		if (radioArgs->selection==RADIO_INPUT_COUNT)
+			radioArgs->number = rand() % (radioArgs->col * radioArgs->row) + 1;
+		if (radioArgs->selection == RADIO_INPUT_RATE)
+			radioArgs->number = rand() % 100 + 1;
+
+		radioArgs->iptNumber->value(std::to_string(radioArgs->number).c_str());
 	}, (void*)radioArgs);
 }
 
@@ -166,10 +170,21 @@ void HomeWindow::initButtons() {
 
 void HomeWindow::startGame(Fl_Widget* w, void* args) {
 	GameArgs* gameArgs = (GameArgs*)args;
-	if (!gameArgs->board) {
-		fl_alert("The board is not ready yet. Try Config?");
-		return;
-	}
+	RadioArgs* radioArgs = gameArgs->radioArgs;
+	if (gameArgs->board) delete gameArgs->board;
+	try {
+		switch (radioArgs->selection) {
+			case RADIO_READ_BOARD: {
+				std::ifstream file(radioArgs->iptPath->value());
+				gameArgs->board = new Board(file);
+			} case RADIO_INPUT_COUNT: {
+				gameArgs->board = new Board(std::stoi(radioArgs->iptRow->value()), std::stoi(radioArgs->iptColumn->value()), std::stoi(radioArgs->iptNumber->value()));
+			} case RADIO_INPUT_RATE: {
+
+			}
+		}
+	} catch (std::exception e) { return; }
+
 	if (gameArgs->window && gameArgs->window->isOpen) return;
 	gameArgs->window = new BoardWindow(gameArgs->board->getColumn(), gameArgs->board->getRow());
 	BoardWindow* boardWindow = (BoardWindow*)gameArgs->window;
