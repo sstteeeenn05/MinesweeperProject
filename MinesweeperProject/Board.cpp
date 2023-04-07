@@ -73,6 +73,15 @@ bool Board::isCoordinateValid(int x, int y) const {
     return (x >= 0 && x < column && y >= 0 && y < row);
 }
 
+void Board::showMine() {
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < column; j++) {
+            if (answerBoard[i][j] == 'X')
+                boardArgs.board[i][j]='X';
+        }
+    }
+}
+
 void Board::revealGrid(int x, int y) {
     for (int i = y - 1; i <= y + 1; i++) {
         for (int j = x - 1; j <= x + 1; j++) {
@@ -151,6 +160,7 @@ void Board::leftClick(int x, int y) {
     remainBlankCount--;
 
     if (answerBoard[y][x] == 'X') {
+        showMine();
         boardArgs.gameStatus = LOSE;
         return;
     }

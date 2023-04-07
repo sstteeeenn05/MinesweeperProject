@@ -35,6 +35,8 @@ private:
 
     bool isCoordinateValid(int x, int y) const;
 
+    void showMine();
+
     void revealGrid(int x, int y);
 
 public:
