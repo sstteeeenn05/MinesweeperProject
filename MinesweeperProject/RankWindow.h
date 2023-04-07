@@ -6,7 +6,6 @@
 
 class RankWindow{
 public:
-	ConfigArgs* args = nullptr;
 	bool isOpen = false;
 	Fl_Window* window = nullptr;
 	RankWindow();
