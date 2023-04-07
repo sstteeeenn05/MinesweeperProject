@@ -34,7 +34,7 @@ void Board::randomTheBoard(double randomRate) {
     const unsigned int mineRange = static_cast<int>(randomRate * 100);
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < column; j++) {
-            if (generator() % 100 + 1 < mineRange) {
+            if (generator() % 100 + 1 <= mineRange) {
                 answerBoard[i][j] = 'X';
                 bombCount++;
                 plusOneAroundTheMine(j, i);
@@ -83,19 +83,35 @@ void Board::showMine() {
 }
 
 void Board::revealGrid(int x, int y) {
-    for (int i = y - 1; i <= y + 1; i++) {
-        for (int j = x - 1; j <= x + 1; j++) {
-            if (isCoordinateValid(j, i)) {
-                if (answerBoard[i][j] == '0' &&
-                    (boardArgs.board[i][j] == '#'
-                     || boardArgs.board[i][j] == '?')) {
-                    boardArgs.board[i][j] = answerBoard[i][j];
-                    revealGrid(j, i);
+    struct Pos {
+        int x;
+        int y;
+    };
+
+    std::vector<Pos> queue;
+    queue.reserve(100);
+    queue.push_back(Pos{x, y});
+
+    while (!queue.empty()) {
+        if (answerBoard[queue[0].y][queue[0].x] == '0' &&
+            (boardArgs.board[queue[0].y][queue[0].x] == '#'
+             || boardArgs.board[queue[0].y][queue[0].x] == '?')) {
+
+            for (int i = queue[0].y - 1; i <= queue[0].y + 1; i++) {
+                for (int j = queue[0].x - 1; j <= queue[0].x + 1; j++) {
+                    if (isCoordinateValid(j, i)) {
+                        if((boardArgs.board[i][j] == '#' || boardArgs.board[i][j] == '?'))
+                            queue.push_back(Pos{j, i});
+                    }
                 }
-                else if (answerBoard[i][j] != 'X' && boardArgs.board[i][j] != 'f')
-                    boardArgs.board[i][j] = answerBoard[i][j];
             }
-        }
+
+             }
+
+        if (answerBoard[queue[0].y][queue[0].x] != 'X' && boardArgs.board[queue[0].y][queue[0].x] != 'f')
+            boardArgs.board[queue[0].y][queue[0].x] = answerBoard[queue[0].y][queue[0].x];
+
+        queue.erase(queue.begin());
     }
 }
 
@@ -153,11 +169,7 @@ Board::Board(int inputRow, int inputColumn, int mineCount) : row(inputRow), colu
 void Board::leftClick(int x, int y) {
     if (!isCoordinateValid(x, y)) throw std::exception("X or Y out of range.");
 
-    if (boardArgs.board[y][x] != 'f') boardArgs.board[y][x] = answerBoard[y][x];
-    else return;
-
-    openBlankCount++;
-    remainBlankCount--;
+    if (boardArgs.board[y][x] == 'f')return; 
 
     if (answerBoard[y][x] == 'X') {
         showMine();
@@ -165,17 +177,7 @@ void Board::leftClick(int x, int y) {
         return;
     }
 
-    for (int i = y - 1; i <= y + 1; i++) {
-        for (int j = x - 1; j <= x + 1; j++) {
-            if (isCoordinateValid(j, i)) {
-                if (answerBoard[i][j] == '0' &&
-                    (boardArgs.board[i][j] == '#'
-                     || boardArgs.board[i][j] == '?')) {
-                    revealGrid(j, i);
-                }
-            }
-        }
-    }
+    revealGrid(x,y);
 
     countBlank();
     if (remainBlankCount == 0)boardArgs.gameStatus = BOARD_STATUS_WIN;
