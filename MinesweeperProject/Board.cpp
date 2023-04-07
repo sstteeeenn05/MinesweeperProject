@@ -161,7 +161,7 @@ void Board::leftClick(int x, int y) {
 
     if (answerBoard[y][x] == 'X') {
         showMine();
-        boardArgs.gameStatus = LOSE;
+        boardArgs.gameStatus = BOARD_STATUS_LOSE;
         return;
     }
 
@@ -178,7 +178,7 @@ void Board::leftClick(int x, int y) {
     }
 
     countBlank();
-    if (remainBlankCount == 0)boardArgs.gameStatus = WIN;
+    if (remainBlankCount == 0)boardArgs.gameStatus = BOARD_STATUS_WIN;
 }
 
 void Board::rightClick(int x, int y) {

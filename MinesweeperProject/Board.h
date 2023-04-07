@@ -2,15 +2,7 @@
 
 #include <vector>
 #include <fstream>
-
-constexpr int WIN = 2;
-constexpr int LOSE = 1;
-constexpr int CONTINUE = 0;
-
-struct BoardArgs {
-    std::vector<std::vector<char>> board;
-    int gameStatus = CONTINUE;
-};
+#include "DataType.h"
 
 class Board {
 private:
