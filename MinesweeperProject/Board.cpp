@@ -169,7 +169,10 @@ Board::Board(int inputRow, int inputColumn, int mineCount) : row(inputRow), colu
 void Board::leftClick(int x, int y) {
     if (!isCoordinateValid(x, y)) throw std::exception("X or Y out of range.");
 
-    if (boardArgs.board[y][x] == 'f')return; 
+    if (boardArgs.board[y][x] == 'f') throw std::exception("Left click on flag.");
+
+    if(boardArgs.board[y][x]!='#' && boardArgs.board[y][x]!='?')
+        throw std::exception("Left click on clicked grid.");
 
     if (answerBoard[y][x] == 'X') {
         showMine();
@@ -185,6 +188,9 @@ void Board::leftClick(int x, int y) {
 
 void Board::rightClick(int x, int y) {
     if (!isCoordinateValid(x, y)) throw std::exception("X or Y out of range.");
+    if(boardArgs.board[y][x]!='#' && boardArgs.board[y][x]!='?')
+        throw std::exception("Right click on clicked grid.");
+    
     constexpr char symbol[3] = {'#', 'f', '?'};
 
     for (int i = 0; i < 3; i++) {
