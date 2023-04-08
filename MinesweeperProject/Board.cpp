@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <random>
 #include <exception>
+#include <queue>
 
 void Board::initializeBoards() {
     boardArgs.board = std::vector<std::vector<char>>
@@ -88,34 +89,42 @@ void Board::revealGrid(int x, int y) {
         int y;
     };
 
-    std::vector<Pos> queue;
-    queue.reserve(100);
-    queue.push_back(Pos{x, y});
+    std::queue<Pos> queue;
+    queue.push(Pos{x, y});
 
     while (!queue.empty()) {
-        if (answerBoard[queue[0].y][queue[0].x] == MINE_NULL &&
-            (boardArgs.board[queue[0].y][queue[0].x] == MINE_MASK
-             || boardArgs.board[queue[0].y][queue[0].x] == MINE_SUS)) {
+        const Pos tempPos = queue.front();
+        queue.pop();
+        if (answerBoard[tempPos.y][tempPos.x] == '0' &&
+            (boardArgs.board[tempPos.y][tempPos.x] == '#'
+             || boardArgs.board[tempPos.y][tempPos.x] == '?')) {
 
-            for (int i = queue[0].y - 1; i <= queue[0].y + 1; i++) {
-                for (int j = queue[0].x - 1; j <= queue[0].x + 1; j++) {
+            for (int i = tempPos.y - 1; i <= tempPos.y + 1; i++) {
+                for (int j = tempPos.x - 1; j <= tempPos.x + 1; j++) {
                     if (isCoordinateValid(j, i)) {
-                        if((boardArgs.board[i][j] == MINE_MASK || boardArgs.board[i][j] == MINE_SUS))
-                            queue.push_back(Pos{j, i});
+                        if ((boardArgs.board[i][j] == '#' || boardArgs.board[i][j] == '?'))
+                            queue.push(Pos{j, i});
                     }
                 }
             }
 
              }
 
-        if (answerBoard[queue[0].y][queue[0].x] != MINE_MINE && boardArgs.board[queue[0].y][queue[0].x] != MINE_FLAG)
-            boardArgs.board[queue[0].y][queue[0].x] = answerBoard[queue[0].y][queue[0].x];
+        if (answerBoard[tempPos.y][tempPos.x] != 'X' && boardArgs.board[tempPos.y][tempPos.x] != 'f')
+            boardArgs.board[tempPos.y][tempPos.x] = answerBoard[tempPos.y][tempPos.x];
 
-        queue.erase(queue.begin());
     }
 }
 
 Board::Board() = default;
+
+Board::Board(const Board &rhs) {
+    answerBoard = rhs.answerBoard;
+    boardArgs = rhs.boardArgs;
+    bombCount = rhs.bombCount;
+    remainBlankCount = rhs.remainBlankCount;
+    openBlankCount = rhs.openBlankCount;
+}
 
 Board::Board(std::ifstream &inputFile) {
     inputFile >> row >> column;

@@ -34,7 +34,9 @@ private:
 public:
 
     Board();
-
+    
+    Board(const Board &rhs);
+    
     explicit Board(std::ifstream &inputFile);
 
     Board(int inputRow, int inputColumn, double randomRate);
