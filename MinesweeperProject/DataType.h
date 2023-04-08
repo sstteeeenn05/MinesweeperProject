@@ -10,6 +10,8 @@
 #include "FL/Fl_Radio_Round_Button.h"
 #include "FL/Fl_File_Chooser.h"
 
+#define CHOOSER_ARGS "board.txt", "Text Files(*.txt)", Fl_File_Chooser::SINGLE, "Select Board File"
+
 class Board;
 class BoardWindow;
 class ConfigWindow;
@@ -75,6 +77,7 @@ struct BoardArgs {
 	std::vector<std::vector<char>> board;
 	std::vector<std::vector<char>> answer;
 	int row, column;
+	double randomRate;
 	int bombCount = 0;
     int flagCount = 0;
     int openBlankCount = 0;

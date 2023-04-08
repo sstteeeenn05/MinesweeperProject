@@ -12,7 +12,7 @@ private:
 
     void calculateAnswerByInput(std::ifstream &inputFile);
 
-    void randomTheBoard(double randomRate);
+    void randomTheBoard();
 
     void plusOneAroundTheMine(int x, int y);
 

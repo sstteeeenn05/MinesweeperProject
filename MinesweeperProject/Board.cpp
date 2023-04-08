@@ -29,10 +29,10 @@ void Board::calculateAnswerByInput(std::ifstream &inputFile) {
     }
 }
 
-void Board::randomTheBoard(double randomRate) {
+void Board::randomTheBoard() {
     std::random_device dev;
     std::mt19937 generator(dev());
-    const unsigned int mineRange = static_cast<int>(randomRate * 100);
+    const unsigned int mineRange = static_cast<int>(boardArgs.randomRate * 100);
     for (int i = 0; i < boardArgs.row; i++) {
         for (int j = 0; j < boardArgs.column; j++) {
             if (generator() % 100 + 1 <= mineRange) {
@@ -136,13 +136,14 @@ Board::Board(std::ifstream &inputFile) {
 
 Board::Board(int inputRow, int inputColumn, double randomRate) {
     boardArgs.mode = MODE_INPUT_RATE;
+    boardArgs.randomRate = randomRate;
     boardArgs.row = inputRow;
     boardArgs.column = inputColumn;
     if (boardArgs.row <= 0 && boardArgs.column <= 0) throw std::exception("Row or column out of range.");
     if (randomRate < 0) throw std::exception("Random rate out of range.");
 
     initializeBoards();
-    randomTheBoard(randomRate);
+    randomTheBoard();
     countBlank();
 
 }

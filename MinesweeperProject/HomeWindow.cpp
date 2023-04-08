@@ -56,7 +56,7 @@ void HomeWindow::initRadioArgs() {
 
 void HomeWindow::initRadioReadBoard() {
 
-	Fl_File_Chooser* chooser = new Fl_File_Chooser("board.txt", "Text Files(*.txt)", Fl_File_Chooser::SINGLE, "Select Board File");
+	Fl_File_Chooser* chooser = new Fl_File_Chooser(CHOOSER_ARGS);
 	Fl_Input* iptPath = new Fl_Input(RADIO_WIDTH + LABEL_WIDTH + MARGIN * 2, RADIO_Y[MODE_READ_BOARD], PATH_WIDTH, RADIO_HEIGHT, "Path:");
 	Fl_Button* btnChooser = new Fl_Button(RADIO_WIDTH + LABEL_WIDTH + PATH_WIDTH + MARGIN * 3, RADIO_Y[MODE_READ_BOARD], CHOOSER_WIDTH, RADIO_HEIGHT, "...");
 
@@ -66,7 +66,7 @@ void HomeWindow::initRadioReadBoard() {
 
 	chooser->callback([](Fl_File_Chooser* c, void* args) {
 		std::string path = c->value();
-		if (path.substr(path.find_last_of(".") + 1) == "txt") {
+		if (path.substr(path.find_last_of(".") + 1) == "txt" && !c->shown()) {
 			auto radioArgs = (RadioArgs*)args;
 			radioArgs->boardPath = path;
 			radioArgs->iptPath->value(path.c_str());

@@ -13,8 +13,6 @@
 #include "FL/Fl_PNG_Image.h"
 #include "FL/Fl_Window.h"
 
-class ResultWindow;
-
 class BoardWindow{
 	const int MARGIN = 10;
 	const int BTN_MINE_SIZE = 30;
@@ -32,7 +30,6 @@ public:
 	};
 
 	Board* board = nullptr;
-	ResultWindow* rw;
 	const BoardArgs& boardArgs;
 	std::vector<std::vector<MineArgs*> > mineList;
 	Fl_Window* mainWindow, * resultWindow;
@@ -41,10 +38,10 @@ public:
 	BoardWindow(Board*);
 
 	void initMine();
-	void initWindowTItle(Fl_Window*);
-	void update(BoardWindow*);
-	void win(BoardWindow*);
-	void lose(BoardWindow*);
+	void initWindowTItle();
+	void update();
+	void win();
+	void lose();
 
 	void initResultWindow();
 	void initResultVariables();

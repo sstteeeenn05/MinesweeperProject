@@ -9,13 +9,15 @@ BoardWindow::BoardWindow(Board* b) :board(b), boardArgs(b->getBoardArgs()) {
 
 	mainWindow->end();
 
-	initWindowTItle(mainWindow);
+	initWindowTItle();
 }
 
-void BoardWindow::initWindowTItle(Fl_Window* w) {
+void BoardWindow::initWindowTItle() {
 	std::stringstream* title = new std::stringstream();
-	(*title) << "Game (" << boardArgs.column << "x" << boardArgs.row << ") 0%" << std::endl;
-	w->label(title->str().c_str());
+	title->str("");
+	title->clear();
+	(*title) << "Game (" << boardArgs.column << "x" << boardArgs.row << ") 0.0%" << std::endl;
+	mainWindow->label(title->str().c_str());
 	delete title;
 }
 
@@ -35,7 +37,7 @@ void BoardWindow::initMine(){
 						mineArgs->board->leftClick(mineArgs->x, mineArgs->y);
 					if (Fl::event_button() == FL_RIGHT_MOUSE)
 						mineArgs->board->rightClick(mineArgs->x, mineArgs->y);
-					mineArgs->parent->update(mineArgs->parent);
+					mineArgs->parent->update();
 					mineArgs->isProcessing = false;
 				}
 			}, (void*)mineArgs);
@@ -49,25 +51,25 @@ void BoardWindow::initMine(){
 	}
 }
 
-void BoardWindow::update(BoardWindow* bw) {
+void BoardWindow::update() {
 	std::stringstream* title = new std::stringstream();
 	(*title) << "Game (" << boardArgs.column << "x" << boardArgs.row << ") " << std::fixed << std::setprecision(1) <<
-		(double)bw->boardArgs.openBlankCount / (bw->boardArgs.openBlankCount + bw->boardArgs.remainBlankCount) * 100 << "%" << std::endl;
-	bw->mainWindow->label(title->str().c_str());
+		(double)boardArgs.openBlankCount / (boardArgs.openBlankCount + boardArgs.remainBlankCount) * 100 << "%" << std::endl;
+	mainWindow->label(title->str().c_str());
 	delete title;
 
 	std::vector<std::future<void> > allocateTaskList;
-	for (auto& mines : bw->mineList) for (auto& mine : mines) allocateTaskList.push_back(std::async(std::launch::async, [=]() {
+	for (auto& mines : mineList) for (auto& mine : mines) allocateTaskList.push_back(std::async(std::launch::async, [=] {
 		if (mine->button->label()) delete mine->button->label();
 		mine->button->image(nullptr);
 		mine->button->label(nullptr);
 	}));
 	for (auto& task : allocateTaskList) task.get();
 
-	for (int i = 0; i < bw->boardArgs.row; i++) {
-		for (int j = 0; j < bw->boardArgs.column; j++) {
-			auto currentButton = bw->mineList[i][j]->button;
-			const auto currentValue = (int)bw->boardArgs.board[i][j];
+	for (int i = 0; i < boardArgs.row; i++) {
+		for (int j = 0; j < boardArgs.column; j++) {
+			auto currentButton = mineList[i][j]->button;
+			const auto currentValue = (int)boardArgs.board[i][j];
 			switch (currentValue) {
 			case MINE_FLAG:
 			case MINE_SUS:
@@ -81,7 +83,7 @@ void BoardWindow::update(BoardWindow* bw) {
 				currentButton->activate();
 				break;
 			default: {
-				const char* label = new char[2] {bw->boardArgs.board[i][j], '\0'};
+				const char* label = new char[2] {boardArgs.board[i][j], '\0'};
 				currentButton->label(label);
 			}case MINE_NULL:
 				currentButton->set();
@@ -92,27 +94,27 @@ void BoardWindow::update(BoardWindow* bw) {
 		}
 	}
 
-	switch (bw->boardArgs.status) {
+	switch (boardArgs.status) {
 		case BOARD_STATUS_WIN:
-			bw->win(bw);
+			win();
 			break;
 		case BOARD_STATUS_LOSE:
-			bw->lose(bw);
+			lose();
 			break;
 		case BOARD_STATUS_CONTINUE:
 			return;
 	}
 
 	initResultWindow();
-	bw->resultWindow->show();
+	resultWindow->show();
 }
 
-void BoardWindow::win(BoardWindow* bw) {
-	for (int i = 0; i < bw->boardArgs.row; i++) {
-		for (int j = 0; j < bw->boardArgs.column; j++) {
+void BoardWindow::win() {
+	for (int i = 0; i < boardArgs.row; i++) {
+		for (int j = 0; j < boardArgs.column; j++) {
 			clock_t start = clock();
-			auto currentButton = bw->mineList[i][j]->button;
-			const auto currentValue = (int)bw->boardArgs.answer[i][j];
+			auto currentButton = mineList[i][j]->button;
+			const auto currentValue = (int)boardArgs.answer[i][j];
 			if (currentButton->label()) delete currentButton->label();
 			currentButton->image(nullptr);
 			currentButton->label(nullptr);
@@ -120,21 +122,21 @@ void BoardWindow::win(BoardWindow* bw) {
 			currentButton->set();
 			currentButton->selection_color(FL_GREEN);
 			currentButton->redraw();
-			while (clock() - start < CLOCKS_PER_SEC / 100) Fl::flush();
+			while (clock() - start < CLOCKS_PER_SEC / 200) Fl::flush();
 		}
 	}
 }
 
-void BoardWindow::lose(BoardWindow* bw) {
-	for (int i = 0; i < bw->boardArgs.row; i++) {
-		for (int j = 0; j < bw->boardArgs.column; j++) {
+void BoardWindow::lose() {
+	for (int i = 0; i < boardArgs.row; i++) {
+		for (int j = 0; j < boardArgs.column; j++) {
 			clock_t start = clock();
-			auto currentButton = bw->mineList[i][j]->button;
-			const auto currentValue = (int)bw->boardArgs.answer[i][j];
-			if (currentValue == MINE_MINE) {
-				currentButton->image(bw->PATH_ICON.at(MINE_MINE));
-				currentButton->color(FL_RED);
-			} else currentButton->deactivate();
+			auto currentButton = mineList[i][j]->button;
+			const auto currentValue = (int)boardArgs.answer[i][j];
+			if (currentValue == MINE_MINE)
+				currentButton->image(PATH_ICON.at(MINE_MINE));
+			else currentButton->deactivate();
+			currentButton->color(FL_RED);
 			currentButton->selection_color(FL_RED);
 			currentButton->redraw();
 			while (clock() - start < CLOCKS_PER_SEC / 200) Fl::flush();
@@ -143,7 +145,7 @@ void BoardWindow::lose(BoardWindow* bw) {
 }
 
 void BoardWindow::initResultWindow() {
-	resultWindow = new Fl_Window(RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT);
+	resultWindow = new Fl_Window(RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT, (boardArgs.status == BOARD_STATUS_WIN) ? "You Win!" : "You Lose");
 	resultWindow->set_modal();
 	resultWindow->begin();
 
@@ -156,7 +158,7 @@ void BoardWindow::initResultWindow() {
 void BoardWindow::initResultVariables() {
 	resultButtonList = {
 		{"Play Again",&BoardWindow::playAgain,(void*)this},
-		{"New Game",&BoardWindow::newGame,(void*)this},
+		{"Regenerate",&BoardWindow::newGame,(void*)this},
 		{"Submit Score",&BoardWindow::submitScore,(void*)this},
 		{"Exit",&BoardWindow::closeGame,(void*)this}
 	};
@@ -174,15 +176,47 @@ void BoardWindow::initResultButtonArgs() {
 void BoardWindow::playAgain(Fl_Widget* w, void* args) {
 	auto bw = (BoardWindow*)args;
 	bw->board->maskBoard();
-	bw->initWindowTItle(bw->mainWindow);
-	bw->update(bw);
+	bw->initWindowTItle();
+	bw->update();
 	bw->mainWindow->redraw();
 	bw->closeResultWindow(bw->resultWindow, args);
 }
 
 void BoardWindow::newGame(Fl_Widget* w, void* args) {
 	auto bw = (BoardWindow*)args;
-
+	auto& boardArgs = bw->boardArgs;
+	//Board* b = nullptr;
+	std::promise<Board*> p;
+	std::future<Board*> b = p.get_future();
+	try {
+		switch (boardArgs.mode) {
+			case MODE_READ_BOARD: {
+				Fl_File_Chooser* chooser = new Fl_File_Chooser(CHOOSER_ARGS);
+				chooser->callback([](Fl_File_Chooser* c, void* args) {
+					std::string path = c->value();
+					if (!c->shown()) {
+						std::ifstream file(path);
+						((std::promise<Board*>*)args)->set_value(new Board(file));
+					}
+				}, &p);
+				chooser->show();
+				while(chooser->shown()) Fl::wait();
+				break;
+			} case MODE_INPUT_RATE:
+				p.set_value(new Board(boardArgs.row, boardArgs.column, boardArgs.randomRate));
+				break;
+			case MODE_INPUT_COUNT:
+				p.set_value(new Board(boardArgs.row, boardArgs.column, boardArgs.bombCount));
+				break;
+			default: throw std::exception("Logic error");
+		}
+		auto boardWindow = new BoardWindow(b.get());
+		boardWindow->mainWindow->show();
+		bw->closeGame(NULL, args);
+	} catch (std::exception e) {
+		fl_alert(e.what());
+		return;
+	}
 }
 
 void BoardWindow::submitScore(Fl_Widget* w, void* args) {
