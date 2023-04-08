@@ -35,13 +35,13 @@ public:
 
     Board();
     
-    Board(const Board &rhs);
-    
     explicit Board(std::ifstream &inputFile);
 
     Board(int inputRow, int inputColumn, double randomRate);
 
     Board(int inputRow, int inputColumn, int mineCount);
+
+    void maskBoard();
 
     void leftClick(int x, int y);
 

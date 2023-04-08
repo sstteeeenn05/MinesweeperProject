@@ -119,14 +119,6 @@ void Board::revealGrid(int x, int y) {
 
 Board::Board() = default;
 
-Board::Board(const Board &rhs) {
-    answerBoard = rhs.answerBoard;
-    boardArgs = rhs.boardArgs;
-    bombCount = rhs.bombCount;
-    remainBlankCount = rhs.remainBlankCount;
-    openBlankCount = rhs.openBlankCount;
-}
-
 Board::Board(std::ifstream &inputFile) {
     inputFile >> row >> column;
     inputFile.get();
@@ -174,6 +166,13 @@ Board::Board(int inputRow, int inputColumn, int mineCount) : row(inputRow), colu
     }
 
     countBlank();
+}
+
+void Board::maskBoard() {
+    boardArgs.gameStatus = BOARD_STATUS_CONTINUE;
+    std::for_each(boardArgs.board.begin(), boardArgs.board.end(), [&](std::vector<char> &i) {
+        i = std::vector<char>(column, '#');
+    });
 }
 
 void Board::leftClick(int x, int y) {
