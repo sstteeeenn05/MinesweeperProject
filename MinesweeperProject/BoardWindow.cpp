@@ -146,6 +146,7 @@ void BoardWindow::lose() {
 
 void BoardWindow::initResultWindow() {
 	resultWindow = new Fl_Window(RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT, (boardArgs.status == BOARD_STATUS_WIN) ? "You Win!" : "You Lose");
+	resultWindow->hotspot(0, 0);
 	resultWindow->set_modal();
 	resultWindow->begin();
 
