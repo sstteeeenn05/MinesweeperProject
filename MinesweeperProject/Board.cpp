@@ -93,24 +93,25 @@ void Board::revealGrid(int x, int y) {
     queue.push(Pos{x, y});
 
     while (!queue.empty()) {
+        
         const Pos tempPos = queue.front();
         queue.pop();
-        if (answerBoard[tempPos.y][tempPos.x] == '0' &&
-            (boardArgs.board[tempPos.y][tempPos.x] == '#'
-             || boardArgs.board[tempPos.y][tempPos.x] == '?')) {
+        
+        if (answerBoard[tempPos.y][tempPos.x] == MINE_NULL &&
+            (boardArgs.board[tempPos.y][tempPos.x] == MINE_MASK
+             || boardArgs.board[tempPos.y][tempPos.x] == MINE_SUS)) {
 
             for (int i = tempPos.y - 1; i <= tempPos.y + 1; i++) {
                 for (int j = tempPos.x - 1; j <= tempPos.x + 1; j++) {
                     if (isCoordinateValid(j, i)) {
-                        if ((boardArgs.board[i][j] == '#' || boardArgs.board[i][j] == '?'))
+                        if ((boardArgs.board[i][j] == MINE_MASK || boardArgs.board[i][j] == MINE_SUS))
                             queue.push(Pos{j, i});
                     }
                 }
             }
+        }
 
-             }
-
-        if (answerBoard[tempPos.y][tempPos.x] != 'X' && boardArgs.board[tempPos.y][tempPos.x] != 'f')
+        if (answerBoard[tempPos.y][tempPos.x] != MINE_MINE && boardArgs.board[tempPos.y][tempPos.x] != MINE_FLAG)
             boardArgs.board[tempPos.y][tempPos.x] = answerBoard[tempPos.y][tempPos.x];
 
     }
