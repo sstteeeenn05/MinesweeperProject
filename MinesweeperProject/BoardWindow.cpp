@@ -211,6 +211,7 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 			default: throw std::exception("Logic error");
 		}
 		auto boardWindow = new BoardWindow(b.get());
+		boardWindow->mainWindow->resize(bw->mainWindow->x(), bw->mainWindow->y(), boardWindow->mainWindow->w(), boardWindow->mainWindow->h());
 		boardWindow->mainWindow->show();
 		bw->closeGame(NULL, args);
 	} catch (std::exception e) {
