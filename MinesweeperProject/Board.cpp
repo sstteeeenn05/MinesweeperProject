@@ -156,7 +156,7 @@ Board::Board(int inputRow, int inputColumn, int mineCount) : row(inputRow), colu
 
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < column; j++) {
-            if (tempBoard[i * row + j] == MINE_MINE) {
+            if (tempBoard[i * column + j] == MINE_MINE) {
                 answerBoard[i][j] = MINE_MINE;
                 plusOneAroundTheMine(j, i);
             }

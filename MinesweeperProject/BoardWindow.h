@@ -21,11 +21,12 @@ public:
 	Board* board = nullptr;
 	const BoardArgs& boardArgs;
 	const std::vector<std::vector<char> >& answerBoard;
-	const int row, col;
+	const int row, col, totalBlank;
 	std::vector<std::vector<MineArgs*> > mineList;
 	Fl_Window* window;
 	BoardWindow(Board*);
 	void initMine();
 	void update(BoardWindow*);
+	void win(BoardWindow*);
 	void lose(BoardWindow*);
 };
