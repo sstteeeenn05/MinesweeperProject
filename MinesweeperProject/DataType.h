@@ -16,9 +16,9 @@ class ConfigWindow;
 class RankWindow;
 
 enum {
-	RADIO_READ_BOARD,
-	RADIO_INPUT_COUNT,
-	RADIO_INPUT_RATE
+	MODE_READ_BOARD,
+	MODE_INPUT_COUNT,
+	MODE_INPUT_RATE
 };
 
 enum {
@@ -59,24 +59,26 @@ struct MineArgs {
 	BoardWindow* parent = nullptr;
 	bool isProcessing = false;
 	int x, y;
-	int status = 0;
 };
 
-struct GenericArgs {
-	Fl_Button* button = nullptr;
-};
-
-struct GameArgs :GenericArgs {
-	BoardWindow* window = nullptr;
+struct GameArgs {
+	BoardWindow* mainWindow = nullptr;
 	Board* board = nullptr;
 	RadioArgs* radioArgs = nullptr;
 };
 
-struct RankArgs :GenericArgs {
+struct RankArgs {
 	RankWindow* window = nullptr;
 };
 
 struct BoardArgs {
 	std::vector<std::vector<char>> board;
-	int gameStatus = BOARD_STATUS_CONTINUE;
+	std::vector<std::vector<char>> answer;
+	int row, column;
+	int bombCount = 0;
+    int flagCount = 0;
+    int openBlankCount = 0;
+    int remainBlankCount = 0;
+	int status = BOARD_STATUS_CONTINUE;
+	int mode = MODE_READ_BOARD;
 };

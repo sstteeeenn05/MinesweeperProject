@@ -6,18 +6,18 @@
 
 void Board::initializeBoards() {
     boardArgs.board = std::vector<std::vector<char>>
-            (row, std::vector<char>(column, MINE_MASK));
+            (boardArgs.row, std::vector<char>(boardArgs.column, MINE_MASK));
 
-    answerBoard = std::vector<std::vector<char>>
-            (row, std::vector<char>(column, MINE_NULL));
+    boardArgs.answer = std::vector<std::vector<char>>
+            (boardArgs.row, std::vector<char>(boardArgs.column, MINE_NULL));
 }
 
 void Board::calculateAnswerByInput(std::ifstream &inputFile) {
-    for (int i = 0; i < row; i++) {
-        for (int j = 0; j < column; j++) {
+    for (int i = 0; i < boardArgs.row; i++) {
+        for (int j = 0; j < boardArgs.column; j++) {
             if (inputFile.get() == MINE_MINE) {
-                answerBoard[i][j] = MINE_MINE;
-                bombCount++;
+                boardArgs.answer[i][j] = MINE_MINE;
+                boardArgs.bombCount++;
                 plusOneAroundTheMine(j, i);
             }
         }
@@ -25,7 +25,7 @@ void Board::calculateAnswerByInput(std::ifstream &inputFile) {
         if (inputFile.get() != '\n' && !inputFile.eof()) throw std::exception("File format error.");
 
         // check row count is valid
-        if (inputFile.eof() && i != row - 1) throw std::exception("File format error.");
+        if (inputFile.eof() && i != boardArgs.row - 1) throw std::exception("File format error.");
     }
 }
 
@@ -33,11 +33,11 @@ void Board::randomTheBoard(double randomRate) {
     std::random_device dev;
     std::mt19937 generator(dev());
     const unsigned int mineRange = static_cast<int>(randomRate * 100);
-    for (int i = 0; i < row; i++) {
-        for (int j = 0; j < column; j++) {
+    for (int i = 0; i < boardArgs.row; i++) {
+        for (int j = 0; j < boardArgs.column; j++) {
             if (generator() % 100 + 1 <= mineRange) {
-                answerBoard[i][j] = MINE_MINE;
-                bombCount++;
+                boardArgs.answer[i][j] = MINE_MINE;
+                boardArgs.bombCount++;
                 plusOneAroundTheMine(j, i);
             }
         }
@@ -47,8 +47,8 @@ void Board::randomTheBoard(double randomRate) {
 void Board::plusOneAroundTheMine(int x, int y) {
     for (int i = y - 1; i <= y + 1; i++) {
         for (int j = x - 1; j <= x + 1; j++) {
-            if (isCoordinateValid(j, i) && answerBoard[i][j] != MINE_MINE) {
-                answerBoard[i][j]++;
+            if (isCoordinateValid(j, i) && boardArgs.answer[i][j] != MINE_MINE) {
+                boardArgs.answer[i][j]++;
             }
         }
     }
@@ -56,29 +56,29 @@ void Board::plusOneAroundTheMine(int x, int y) {
 
 void Board::countBlank() {
     int tempBlankCount = 0;
-    for (int i = 0; i < row; i++) {
-        for (int j = 0; j < column; j++) {
+    for (int i = 0; i < boardArgs.row; i++) {
+        for (int j = 0; j < boardArgs.column; j++) {
             if ((boardArgs.board[i][j] == MINE_MASK ||
                  boardArgs.board[i][j] == MINE_FLAG ||
                  boardArgs.board[i][j] == MINE_SUS) &&
-                answerBoard[i][j] != MINE_MINE)
+                boardArgs.answer[i][j] != MINE_MINE)
                 tempBlankCount++;
         }
     }
 
-    remainBlankCount = tempBlankCount;
-    openBlankCount = row * column - bombCount - remainBlankCount;
+    boardArgs.remainBlankCount = tempBlankCount;
+    boardArgs.openBlankCount = boardArgs.row * boardArgs.column - boardArgs.bombCount - boardArgs.remainBlankCount;
 }
 
 bool Board::isCoordinateValid(int x, int y) const {
-    return (x >= 0 && x < column && y >= 0 && y < row);
+    return (x >= 0 && x < boardArgs.column && y >= 0 && y < boardArgs.row);
 }
 
 void Board::showMine() {
-    for (int i = 0; i < row; i++) {
-        for (int j = 0; j < column; j++) {
-            if (answerBoard[i][j] == MINE_MINE)
-                boardArgs.board[i][j]=MINE_MINE;
+    for (int i = 0; i < boardArgs.row; i++) {
+        for (int j = 0; j < boardArgs.column; j++) {
+            if (boardArgs.answer[i][j] == MINE_MINE)
+                boardArgs.board[i][j] = MINE_MINE;
         }
     }
 }
@@ -97,7 +97,7 @@ void Board::revealGrid(int x, int y) {
         const Pos tempPos = queue.front();
         queue.pop();
         
-        if (answerBoard[tempPos.y][tempPos.x] == MINE_NULL &&
+        if (boardArgs.answer[tempPos.y][tempPos.x] == MINE_NULL &&
             (boardArgs.board[tempPos.y][tempPos.x] == MINE_MASK
              || boardArgs.board[tempPos.y][tempPos.x] == MINE_SUS)) {
 
@@ -111,8 +111,8 @@ void Board::revealGrid(int x, int y) {
             }
         }
 
-        if (answerBoard[tempPos.y][tempPos.x] != MINE_MINE && boardArgs.board[tempPos.y][tempPos.x] != MINE_FLAG)
-            boardArgs.board[tempPos.y][tempPos.x] = answerBoard[tempPos.y][tempPos.x];
+        if (boardArgs.answer[tempPos.y][tempPos.x] != MINE_MINE && boardArgs.board[tempPos.y][tempPos.x] != MINE_FLAG)
+            boardArgs.board[tempPos.y][tempPos.x] = boardArgs.answer[tempPos.y][tempPos.x];
 
     }
 }
@@ -120,9 +120,10 @@ void Board::revealGrid(int x, int y) {
 Board::Board() = default;
 
 Board::Board(std::ifstream &inputFile) {
-    inputFile >> row >> column;
+    boardArgs.mode = MODE_READ_BOARD;
+    inputFile >> boardArgs.row >> boardArgs.column;
     inputFile.get();
-    if (row <= 0 && column <= 0) {
+    if (boardArgs.row <= 0 && boardArgs.column <= 0) {
         inputFile.close();
         throw std::exception("Row or column out of range.");
     }
@@ -133,8 +134,11 @@ Board::Board(std::ifstream &inputFile) {
     countBlank();
 }
 
-Board::Board(int inputRow, int inputColumn, double randomRate) : row(inputRow), column(inputColumn) {
-    if (row <= 0 && column <= 0) throw std::exception("Row or column out of range.");
+Board::Board(int inputRow, int inputColumn, double randomRate) {
+    boardArgs.mode = MODE_INPUT_RATE;
+    boardArgs.row = inputRow;
+    boardArgs.column = inputColumn;
+    if (boardArgs.row <= 0 && boardArgs.column <= 0) throw std::exception("Row or column out of range.");
     if (randomRate < 0) throw std::exception("Random rate out of range.");
 
     initializeBoards();
@@ -143,23 +147,26 @@ Board::Board(int inputRow, int inputColumn, double randomRate) : row(inputRow), 
 
 }
 
-Board::Board(int inputRow, int inputColumn, int mineCount) : row(inputRow), column(inputColumn) {
-    if (row <= 0 && column <= 0) throw std::exception("Row or column out of range.");
-    if (mineCount > row * column) throw std::exception("Mine count out of range.");
-    bombCount = mineCount;
+Board::Board(int inputRow, int inputColumn, int mineCount) {
+    boardArgs.mode = MODE_INPUT_COUNT;
+    boardArgs.row = inputRow;
+    boardArgs.column = inputColumn;
+    if (boardArgs.row <= 0 && boardArgs.column <= 0) throw std::exception("Row or column out of range.");
+    if (mineCount > boardArgs.row * boardArgs.column) throw std::exception("Mine count out of range.");
+    boardArgs.bombCount = mineCount;
 
     initializeBoards();
     std::random_device dev;
     std::mt19937 generator(dev());
 
-    std::vector<char> tempBoard(row * column, MINE_NULL);
+    std::vector<char> tempBoard(boardArgs.row * boardArgs.column, MINE_NULL);
     std::fill_n(tempBoard.begin(), mineCount, MINE_MINE);
     std::shuffle(tempBoard.begin(), tempBoard.end(), generator);
 
-    for (int i = 0; i < row; i++) {
-        for (int j = 0; j < column; j++) {
-            if (tempBoard[i * column + j] == MINE_MINE) {
-                answerBoard[i][j] = MINE_MINE;
+    for (int i = 0; i < boardArgs.row; i++) {
+        for (int j = 0; j < boardArgs.column; j++) {
+            if (tempBoard[i * boardArgs.column + j] == MINE_MINE) {
+                boardArgs.answer[i][j] = MINE_MINE;
                 plusOneAroundTheMine(j, i);
             }
         }
@@ -169,9 +176,9 @@ Board::Board(int inputRow, int inputColumn, int mineCount) : row(inputRow), colu
 }
 
 void Board::maskBoard() {
-    boardArgs.gameStatus = BOARD_STATUS_CONTINUE;
+    boardArgs.status = BOARD_STATUS_CONTINUE;
     std::for_each(boardArgs.board.begin(), boardArgs.board.end(), [&](std::vector<char> &i) {
-        i = std::vector<char>(column, '#');
+        i = std::vector<char>(boardArgs.column, '#');
     });
 }
 
@@ -183,16 +190,16 @@ void Board::leftClick(int x, int y) {
     if(boardArgs.board[y][x]!=MINE_MASK && boardArgs.board[y][x]!=MINE_SUS)
         throw std::exception("Left click on clicked grid.");
 
-    if (answerBoard[y][x] == MINE_MINE) {
+    if (boardArgs.answer[y][x] == MINE_MINE) {
         showMine();
-        boardArgs.gameStatus = BOARD_STATUS_LOSE;
+        boardArgs.status = BOARD_STATUS_LOSE;
         return;
     }
 
     revealGrid(x,y);
 
     countBlank();
-    if (remainBlankCount == 0)boardArgs.gameStatus = BOARD_STATUS_WIN;
+    if (boardArgs.remainBlankCount == 0)boardArgs.status = BOARD_STATUS_WIN;
 }
 
 void Board::rightClick(int x, int y) {
@@ -205,42 +212,13 @@ void Board::rightClick(int x, int y) {
     for (int i = 0; i < 3; i++) {
         if (boardArgs.board[y][x] == symbol[i]) {
             boardArgs.board[y][x] = symbol[((i == 2) ? 0 : (i + 1))];
-            if (symbol[i] == MINE_FLAG) flagCount--;
-            else flagCount++;
+            if (symbol[i] == MINE_FLAG) boardArgs.flagCount--;
+            else boardArgs.flagCount++;
             return;
         }
     }
-
 }
 
-int Board::getRow() const {
-    return row;
-}
-
-int Board::getColumn() const {
-    return column;
-}
-
-int Board::getBombCount() const {
-    return bombCount;
-}
-
-int Board::getFlagCount() const {
-    return flagCount;
-}
-
-int Board::getRemainBlank() const {
-    return remainBlankCount;
-}
-
-int Board::getOpenBlank() const {
-    return openBlankCount;
-}
-
-const std::vector<std::vector<char>> &Board::getAnswer() const {
-    return answerBoard;
-}
-
-const BoardArgs &Board::getCurrentBoard() const {
+const BoardArgs &Board::getBoardArgs() const {
     return boardArgs;
 }

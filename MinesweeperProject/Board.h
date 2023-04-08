@@ -7,13 +7,6 @@
 class Board {
 private:
     BoardArgs boardArgs;
-    std::vector<std::vector<char>> answerBoard;
-    int row = 0;
-    int column = 0;
-    int bombCount = 0;
-    int flagCount = 0;
-    int openBlankCount = 0;
-    int remainBlankCount = 0;
 
     void initializeBoards();
 
@@ -47,20 +40,6 @@ public:
 
     void rightClick(int x, int y);
 
-    int getRow() const;
-
-    int getColumn() const;
-
-    int getBombCount() const;
-
-    int getFlagCount() const;
-
-    int getRemainBlank() const;
-
-    int getOpenBlank() const;
-
-    const std::vector<std::vector<char>> &getAnswer() const;
-
-    const BoardArgs &getCurrentBoard() const;
+    const BoardArgs &getBoardArgs() const;
 
 };

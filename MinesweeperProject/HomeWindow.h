@@ -1,12 +1,20 @@
 #pragma once
-#include <vector>
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <exception>
+#include <fstream>
 #include <functional>
+#include <vector>
 
 #include "Board.h"
 #include "BoardWindow.h"
 #include "RankWindow.h"
+#include "DataType.h"
 
 #include "FL/Fl.h"
+#include "FL/fl_ask.H"
 #include "FL/Fl_Button.h"
 #include "FL/Fl_File_Chooser.H"
 #include "FL/Fl_Radio_Round_Button.h"
@@ -37,21 +45,21 @@ class HomeWindow{
 	const int MARGIN = 10;
 public:
 	Fl_Button* logo = nullptr;
-	Fl_Window* window = nullptr;
+	Fl_Window* mainWindow = nullptr;
 	GameArgs* gameArgs = nullptr;
 	RankArgs* rankArgs = nullptr;
 	RadioArgs* radioArgs = nullptr;
 	std::vector<Widget> radioList;
-	std::vector<Widget> buttonList;
+	std::vector<Widget> resultButtonList;
 	HomeWindow();
 
 	void open();
 
 	void initVariables();
-	void initRadios();
+	void initRadioArgs();
 	void initRadioReadBoard();
 	void initRadioInput();
-	void initButtons();
+	void initButtonArgs();
 	void initDefaultRadio();
 
 	static void radioCallback(Fl_Widget*, void*);

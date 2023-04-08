@@ -1,39 +1,29 @@
-#include <algorithm>
-#include <cstdio>
-#include <exception>
-#include <cstdlib>
-#include <ctime>
-#include <fstream>
-
 #include "HomeWindow.h"
-#include "DataType.h"
-
-#include "FL/fl_ask.H"
 
 HomeWindow::HomeWindow() {
 
-	window = new Fl_Window(WINDOW_WIDTH, WINDOW_HEIGHT, "Minesweeper");
-	window->begin();
+	mainWindow = new Fl_Window(WINDOW_WIDTH, WINDOW_HEIGHT, "Minesweeper");
+	mainWindow->begin();
 
 	logo = new Fl_Button(MARGIN, LOGO_Y, LOGO_WIDTH, LOGO_HEIGHT);
-	logo->image((new Fl_PNG_Image("logo.png"))->copy(LOGO_WIDTH, LOGO_HEIGHT));
+	logo->image((new Fl_PNG_Image("img/logo.png"))->copy(LOGO_WIDTH, LOGO_HEIGHT));
 	logo->callback([](Fl_Widget* w, void* args) {
 		system("start https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 	});
 
 	initVariables();
-	initRadios();
+	initRadioArgs();
 	initRadioReadBoard();
 	initRadioInput();
-	initButtons();
+	initButtonArgs();
 	initDefaultRadio();
 
-	window->callback(HomeWindow::close);
-	window->end();
+	mainWindow->callback(HomeWindow::close);
+	mainWindow->end();
 }
 
 void HomeWindow::open() {
-	window->show();
+	mainWindow->show();
 }
 
 void HomeWindow::initVariables() {
@@ -48,14 +38,14 @@ void HomeWindow::initVariables() {
 		{ "Input Respawn Rate", &HomeWindow::radioCallback, (void*)radioArgs }
 	};
 
-	buttonList = {
+	resultButtonList = {
 		{"New Game",&HomeWindow::startGame,(void*)gameArgs},
 		{"Leaderboard",&HomeWindow::openRank,(void*)rankArgs},
 		{"Exit",&HomeWindow::close}
 	};
 }
 
-void HomeWindow::initRadios() {
+void HomeWindow::initRadioArgs() {
 	for (auto &radio : radioList) {
 		static int radioCount = 0;
 		Fl_Radio_Round_Button* button = new Fl_Radio_Round_Button(MARGIN, RADIO_Y[radioCount++], RADIO_WIDTH, RADIO_HEIGHT, radio.text);
@@ -67,8 +57,8 @@ void HomeWindow::initRadios() {
 void HomeWindow::initRadioReadBoard() {
 
 	Fl_File_Chooser* chooser = new Fl_File_Chooser("board.txt", "Text Files(*.txt)", Fl_File_Chooser::SINGLE, "Select Board File");
-	Fl_Input* iptPath = new Fl_Input(RADIO_WIDTH + LABEL_WIDTH + MARGIN * 2, RADIO_Y[RADIO_READ_BOARD], PATH_WIDTH, RADIO_HEIGHT, "Path:");
-	Fl_Button* btnChooser = new Fl_Button(RADIO_WIDTH + LABEL_WIDTH + PATH_WIDTH + MARGIN * 3, RADIO_Y[RADIO_READ_BOARD], CHOOSER_WIDTH, RADIO_HEIGHT, "...");
+	Fl_Input* iptPath = new Fl_Input(RADIO_WIDTH + LABEL_WIDTH + MARGIN * 2, RADIO_Y[MODE_READ_BOARD], PATH_WIDTH, RADIO_HEIGHT, "Path:");
+	Fl_Button* btnChooser = new Fl_Button(RADIO_WIDTH + LABEL_WIDTH + PATH_WIDTH + MARGIN * 3, RADIO_Y[MODE_READ_BOARD], CHOOSER_WIDTH, RADIO_HEIGHT, "...");
 
 	radioArgs->iptPath = iptPath;
 	radioArgs->chooser = chooser;
@@ -90,10 +80,10 @@ void HomeWindow::initRadioReadBoard() {
 }
 
 void HomeWindow::initRadioInput() {
-	Fl_Int_Input* iptNumber = new Fl_Int_Input(RADIO_WIDTH + LABEL_WIDTH + MARGIN * 2, RADIO_Y[RADIO_INPUT_COUNT], VALUE_WIDTH, RADIO_HEIGHT, "Val:");
-	Fl_Button* btnRandom = new Fl_Button(RADIO_WIDTH + LABEL_WIDTH + VALUE_WIDTH + MARGIN * 3, RADIO_Y[RADIO_INPUT_COUNT], BTN_RANDOM_WIDTH, RADIO_HEIGHT, "Random");
-	Fl_Int_Input* iptColumn = new Fl_Int_Input(RADIO_WIDTH + LABEL_WIDTH + MARGIN * 2, RADIO_Y[RADIO_INPUT_RATE], INPUT_WIDTH, RADIO_HEIGHT, "Col:");
-	Fl_Int_Input* iptRow = new Fl_Int_Input(RADIO_WIDTH + LABEL_WIDTH * 2 + INPUT_WIDTH + MARGIN * 3, RADIO_Y[RADIO_INPUT_RATE], INPUT_WIDTH, RADIO_HEIGHT, "Row:");
+	Fl_Int_Input* iptNumber = new Fl_Int_Input(RADIO_WIDTH + LABEL_WIDTH + MARGIN * 2, RADIO_Y[MODE_INPUT_COUNT], VALUE_WIDTH, RADIO_HEIGHT, "Val:");
+	Fl_Button* btnRandom = new Fl_Button(RADIO_WIDTH + LABEL_WIDTH + VALUE_WIDTH + MARGIN * 3, RADIO_Y[MODE_INPUT_COUNT], BTN_RANDOM_WIDTH, RADIO_HEIGHT, "Random");
+	Fl_Int_Input* iptColumn = new Fl_Int_Input(RADIO_WIDTH + LABEL_WIDTH + MARGIN * 2, RADIO_Y[MODE_INPUT_RATE], INPUT_WIDTH, RADIO_HEIGHT, "Col:");
+	Fl_Int_Input* iptRow = new Fl_Int_Input(RADIO_WIDTH + LABEL_WIDTH * 2 + INPUT_WIDTH + MARGIN * 3, RADIO_Y[MODE_INPUT_RATE], INPUT_WIDTH, RADIO_HEIGHT, "Row:");
 
 	iptNumber->value("10");
 	iptColumn->value("10");
@@ -112,9 +102,9 @@ void HomeWindow::initRadioInput() {
 		auto radioArgs = (RadioArgs*)args;
 		if (!radioArgs->iptNumber || !radioArgs->iptColumn || !radioArgs->iptRow) return;
 
-		if (radioArgs->selection == RADIO_INPUT_COUNT)
+		if (radioArgs->selection == MODE_INPUT_COUNT)
 			radioArgs->number = max(min(std::stoi(input->value()), radioArgs->col * radioArgs->row), 1);
-		if (radioArgs->selection == RADIO_INPUT_RATE)
+		if (radioArgs->selection == MODE_INPUT_RATE)
 			radioArgs->number = max(min(std::stoi(input->value()), 100), 1);
 
 		input->value(std::to_string(radioArgs->number).c_str());
@@ -138,10 +128,9 @@ void HomeWindow::initRadioInput() {
 		auto radioArgs = (RadioArgs*)args;
 		if (!radioArgs->iptNumber || !radioArgs->iptColumn || !radioArgs->iptRow) return;
 
-		srand(time(NULL));
-		if (radioArgs->selection==RADIO_INPUT_COUNT)
+		if (radioArgs->selection==MODE_INPUT_COUNT)
 			radioArgs->number = rand() % (radioArgs->col * radioArgs->row) + 1;
-		if (radioArgs->selection == RADIO_INPUT_RATE)
+		if (radioArgs->selection == MODE_INPUT_RATE)
 			radioArgs->number = rand() % 100 + 1;
 
 		radioArgs->iptNumber->value(std::to_string(radioArgs->number).c_str());
@@ -149,13 +138,14 @@ void HomeWindow::initRadioInput() {
 }
 
 void HomeWindow::initDefaultRadio(){
-	auto radioReadBoard = (Fl_Radio_Round_Button*)radioArgs->buttons[RADIO_READ_BOARD];
+	auto radioReadBoard = (Fl_Radio_Round_Button*)radioArgs->buttons[MODE_READ_BOARD];
 	radioReadBoard->do_callback();
 	radioReadBoard->take_focus();
 	radioReadBoard->set();
 }
 
 void HomeWindow::radioCallback(Fl_Widget* w, void* args) {
+	srand(time(NULL));
 	auto radio = (Fl_Radio_Round_Button*)w;
 	auto radioArgs = (RadioArgs*)args;
 	auto itr = std::find(radioArgs->buttons.begin(), radioArgs->buttons.end(), radio);
@@ -163,7 +153,7 @@ void HomeWindow::radioCallback(Fl_Widget* w, void* args) {
 	int index = std::distance(radioArgs->buttons.begin(), itr);
 	radioArgs->selection = index;
 	switch (index) {
-		case RADIO_READ_BOARD:
+		case MODE_READ_BOARD:
 			radioArgs->iptPath->activate();
 			radioArgs->btnChooser->activate();
 			radioArgs->iptNumber->deactivate();
@@ -171,12 +161,12 @@ void HomeWindow::radioCallback(Fl_Widget* w, void* args) {
 			radioArgs->iptRow->deactivate();
 			radioArgs->btnRandom->deactivate();
 			break;
-		case RADIO_INPUT_COUNT:
-		case RADIO_INPUT_RATE:
+		case MODE_INPUT_COUNT:
+		case MODE_INPUT_RATE:
 			radioArgs->iptPath->deactivate();
 			radioArgs->btnChooser->deactivate();
-			if (index == RADIO_INPUT_COUNT) radioArgs->iptNumber->label("Count:");
-			if (index == RADIO_INPUT_RATE) radioArgs->iptNumber->label("Rate(%):");
+			if (index == MODE_INPUT_COUNT) radioArgs->iptNumber->label("Count:");
+			if (index == MODE_INPUT_RATE) radioArgs->iptNumber->label("Rate(%):");
 			radioArgs->iptNumber->activate();
 			radioArgs->iptColumn->activate();
 			radioArgs->iptRow->activate();
@@ -186,13 +176,11 @@ void HomeWindow::radioCallback(Fl_Widget* w, void* args) {
 	radioArgs->iptNumber->do_callback();
 }
 
-void HomeWindow::initButtons() {
-	for (auto &button : buttonList) {
-		static int buttonIndex = 0;
+void HomeWindow::initButtonArgs() {
+	int buttonIndex = 0;
+	for (auto &button : resultButtonList) {
 		Fl_Button* component = new Fl_Button(MARGIN + (MARGIN + BUTTON_WIDTH) * (buttonIndex++), BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, button.text);
 		button.component = component;
-		auto genericArgs = (GenericArgs*)button.args;
-		if (genericArgs) genericArgs->button = component;
 		button.component->callback((Fl_Callback*)button.callback, button.args);
 	}
 }
@@ -204,16 +192,16 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 
 	try {
 		switch (radioArgs->selection) {
-			case RADIO_READ_BOARD: {
+			case MODE_READ_BOARD: {
 				if(!strlen(radioArgs->iptPath->value())) throw std::exception("Please select a board file or try another mode");
 				std::ifstream file(radioArgs->iptPath->value());
 				if (!file.is_open()) throw std::exception("The board file does not exist");
 				gameArgs->board = new Board(file);
 				break;
-			} case RADIO_INPUT_COUNT: {
+			} case MODE_INPUT_COUNT: {
 				gameArgs->board = new Board(std::stoi(radioArgs->iptRow->value()), std::stoi(radioArgs->iptColumn->value()), std::stoi(radioArgs->iptNumber->value()));
 				break;
-			} case RADIO_INPUT_RATE: {
+			} case MODE_INPUT_RATE: {
 				gameArgs->board = new Board(std::stoi(radioArgs->iptRow->value()), std::stoi(radioArgs->iptColumn->value()), (double)std::stoi(radioArgs->iptNumber->value()) / 100);
 				break;
 			} default: throw std::exception("Logic error");
@@ -223,9 +211,9 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 		return;
 	}
 
-	gameArgs->window = new BoardWindow(gameArgs->board);
-	auto boardWindow = (BoardWindow*)gameArgs->window;
-	boardWindow->window->show();
+	gameArgs->mainWindow = new BoardWindow(gameArgs->board);
+	auto boardWindow = (BoardWindow*)gameArgs->mainWindow;
+	boardWindow->mainWindow->show();
 
 	gameArgs = new GameArgs();
 	radioArgs = new RadioArgs();
@@ -234,10 +222,10 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 
 void HomeWindow::openRank(Fl_Widget* w, void* args) {
 	w->~Fl_Widget();
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 void HomeWindow::close(Fl_Widget* w, void* args) {
 	w->~Fl_Widget();
-	exit(0);
+	exit(EXIT_SUCCESS);
 }

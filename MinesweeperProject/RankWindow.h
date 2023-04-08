@@ -7,6 +7,6 @@
 class RankWindow{
 public:
 	bool isOpen = false;
-	Fl_Window* window = nullptr;
+	Fl_Window* mainWindow = nullptr;
 	RankWindow();
 };
