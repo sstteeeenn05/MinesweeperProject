@@ -118,8 +118,9 @@ void BoardWindow::win() {
 			if (currentButton->label()) delete currentButton->label();
 			currentButton->image(nullptr);
 			currentButton->label(nullptr);
+			if (currentValue != MINE_MINE) currentButton->set();
 			currentButton->deactivate();
-			currentButton->set();
+			currentButton->color(FL_GREEN);
 			currentButton->selection_color(FL_GREEN);
 			currentButton->redraw();
 			while (clock() - start < CLOCKS_PER_SEC / 200) Fl::flush();
@@ -186,32 +187,31 @@ void BoardWindow::playAgain(Fl_Widget* w, void* args) {
 void BoardWindow::newGame(Fl_Widget* w, void* args) {
 	auto bw = (BoardWindow*)args;
 	auto& boardArgs = bw->boardArgs;
-	//Board* b = nullptr;
-	std::promise<Board*> p;
-	std::future<Board*> b = p.get_future();
+	Board* b = nullptr;
 	try {
 		switch (boardArgs.mode) {
 			case MODE_READ_BOARD: {
 				Fl_File_Chooser* chooser = new Fl_File_Chooser(CHOOSER_ARGS);
 				chooser->callback([](Fl_File_Chooser* c, void* args) {
 					std::string path = c->value();
-					if (!c->shown()) {
+					if (!c->visible()) {
 						std::ifstream file(path);
-						((std::promise<Board*>*)args)->set_value(new Board(file));
+						*((Board**)args) = new Board(file);
 					}
-				}, &p);
+				}, (void*)&b);
 				chooser->show();
-				while(chooser->shown()) Fl::wait();
+				while (chooser->visible()) Fl::wait();
 				break;
 			} case MODE_INPUT_RATE:
-				p.set_value(new Board(boardArgs.row, boardArgs.column, boardArgs.randomRate));
+				b=new Board(boardArgs.row, boardArgs.column, boardArgs.randomRate);
 				break;
 			case MODE_INPUT_COUNT:
-				p.set_value(new Board(boardArgs.row, boardArgs.column, boardArgs.bombCount));
+				b=new Board(boardArgs.row, boardArgs.column, boardArgs.bombCount);
 				break;
 			default: throw std::exception("Logic error");
 		}
-		auto boardWindow = new BoardWindow(b.get());
+		if (b == nullptr) throw std::exception("Please select a file");
+		auto boardWindow = new BoardWindow(b);
 		boardWindow->mainWindow->resize(bw->mainWindow->x(), bw->mainWindow->y(), boardWindow->mainWindow->w(), boardWindow->mainWindow->h());
 		boardWindow->mainWindow->show();
 		bw->closeGame(NULL, args);
