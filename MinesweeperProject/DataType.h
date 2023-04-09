@@ -1,12 +1,12 @@
 #pragma once
+#pragma warning(disable:4996)
 
 #include <string>
 #include <vector>
 
 #include "FL/Fl.H"
 #include "FL/Fl_Button.h"
-#include "FL/Fl_Input.h"
-#include "FL/Fl_Int_Input.h"
+#include "FL/Fl_Spinner.h"
 #include "FL/Fl_Radio_Round_Button.h"
 #include "FL/Fl_File_Chooser.h"
 
@@ -46,10 +46,11 @@ struct Widget {
 
 struct RadioArgs {
 	std::vector<Fl_Radio_Round_Button*> buttons;
+	Fl_Choice* mode = nullptr;
 	int selection = 0;
 	Fl_File_Chooser* chooser = nullptr;
 	Fl_Input* iptPath = nullptr;
-	Fl_Int_Input* iptNumber = nullptr, * iptColumn = nullptr, * iptRow = nullptr;
+	Fl_Spinner* iptNumber = nullptr, * iptColumn = nullptr, * iptRow = nullptr;
 	Fl_Button* btnChooser = nullptr, * btnRandom = nullptr;
 	std::string boardPath;
 	int row = 10, col = 10, number = 10;
