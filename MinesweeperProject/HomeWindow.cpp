@@ -46,7 +46,7 @@ void HomeWindow::initVariables() {
 }
 
 void HomeWindow::initRadioArgs() {
-	new Fl_Light_Button(LABEL_WIDTH + MENU_MODE_WIDTH + MARGIN, COMPONENT_Y[0], 130, COMPONENT_HEIGHT, "Developer Mode");
+	new Fl_Light_Button(LABEL_WIDTH + MENU_MODE_WIDTH + MARGIN, COMPONENT_Y[0], 130, COMPONENT_HEIGHT, " Developer Mode");
 	radioArgs->mode = new Fl_Choice(LABEL_WIDTH, COMPONENT_Y[0], MENU_MODE_WIDTH, COMPONENT_HEIGHT, "Mode:");
 	int radioCount = 0;
 	for (auto &radio : radioList) radioArgs->mode->add(radio.text, "", (Fl_Callback*)radio.callback, radioArgs);
@@ -54,7 +54,7 @@ void HomeWindow::initRadioArgs() {
 
 void HomeWindow::initRadioReadBoard() {
 
-	Fl_File_Chooser* chooser = new Fl_File_Chooser(CHOOSER_ARGS);
+	Fl_File_Chooser* chooser = new Fl_File_Chooser("board.txt", CHOOSER_ARGS);
 	Fl_Input* iptPath = new Fl_Input(LABEL_WIDTH, COMPONENT_Y[1], PATH_WIDTH, COMPONENT_HEIGHT, "Path:");
 	Fl_Button* btnChooser = new Fl_Button(WINDOW_WIDTH - CHOOSER_WIDTH - MARGIN, COMPONENT_Y[1], CHOOSER_WIDTH, COMPONENT_HEIGHT, "...");
 
@@ -86,10 +86,10 @@ void HomeWindow::initRadioInput() {
 	iptNumber->type(FL_INT_INPUT);
 	iptColumn->type(FL_INT_INPUT);
 	iptRow->type(FL_INT_INPUT);
-	iptNumber->value(10);
-	iptColumn->value(10);
-	iptRow->value(10);
-	iptNumber->range(1,100);
+	iptNumber->value(DEF_CNT);
+	iptColumn->value(DEF_COL);
+	iptRow->value(DEF_ROW);
+	iptNumber->range(1, DEF_COL * DEF_ROW);
 	iptColumn->range(1, MAX_COL);
 	iptRow->range(1, MAX_ROW);
 
@@ -111,7 +111,7 @@ void HomeWindow::initRadioInput() {
 
 		radioArgs->col = radioArgs->iptColumn->value();
 		radioArgs->row = radioArgs->iptRow->value();
-		radioArgs->iptNumber->range(1, (radioArgs->selection == MODE_INPUT_RATE) ? 100 : radioArgs->col * radioArgs->row);
+		radioArgs->iptNumber->range(1, (radioArgs->selection == MODE_INPUT_RATE) ? MAX_PERCENT : radioArgs->col * radioArgs->row);
 		radioArgs->iptNumber->do_callback();
 	};
 	iptColumn->callback(iptSizeCallback, (void*)radioArgs);
@@ -124,7 +124,7 @@ void HomeWindow::initRadioInput() {
 		if (radioArgs->selection==MODE_INPUT_COUNT)
 			radioArgs->number = rand() % (radioArgs->col * radioArgs->row) + 1;
 		if (radioArgs->selection == MODE_INPUT_RATE)
-			radioArgs->number = rand() % 100 + 1;
+			radioArgs->number = rand() % MAX_PERCENT + 1;
 
 		radioArgs->iptNumber->value(radioArgs->number);
 	}, (void*)radioArgs);
@@ -160,7 +160,7 @@ void HomeWindow::radioCallback(Fl_Widget* w, void* args) {
 			radioArgs->btnRandom->activate();
 			break;
 	}
-	radioArgs->iptNumber->range(1, (radioArgs->selection == MODE_INPUT_RATE) ? 100 : radioArgs->col * radioArgs->row);
+	radioArgs->iptNumber->range(1, (radioArgs->selection == MODE_INPUT_RATE) ? MAX_PERCENT : radioArgs->col * radioArgs->row);
 	radioArgs->iptNumber->do_callback();
 }
 
@@ -182,15 +182,13 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 		switch (radioArgs->selection) {
 			case MODE_READ_BOARD: {
 				if(!strlen(radioArgs->iptPath->value())) throw std::exception("Please select a board file or try another mode");
-				std::ifstream file(radioArgs->iptPath->value());
-				if (!file.is_open()) throw std::exception("The board file does not exist");
-				gameArgs->board = new Board(file);
+				gameArgs->board = new Board(radioArgs->iptPath->value());
 				break;
 			} case MODE_INPUT_COUNT: {
 				gameArgs->board = new Board(radioArgs->iptRow->value(), radioArgs->iptColumn->value(), (int)radioArgs->iptNumber->value());
 				break;
 			} case MODE_INPUT_RATE: {
-				gameArgs->board = new Board(radioArgs->iptRow->value(), radioArgs->iptColumn->value(), radioArgs->iptNumber->value() / 100);
+				gameArgs->board = new Board(radioArgs->iptRow->value(), radioArgs->iptColumn->value(), radioArgs->iptNumber->value() / MAX_PERCENT);
 				break;
 			} default: throw std::exception("Logic error");
 		}

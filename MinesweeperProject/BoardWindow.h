@@ -4,6 +4,7 @@
 #include <future>
 #include <iomanip>
 #include <map>
+#include <mutex>
 #include <sstream>
 
 #include "Board.h"
@@ -34,6 +35,7 @@ public:
 	std::vector<std::vector<MineArgs*> > mineList;
 	Fl_Window* mainWindow, * resultWindow;
 	std::vector<Widget> resultButtonList;
+	std::mutex* m_btnCallback = new std::mutex();
 
 	BoardWindow(Board*);
 

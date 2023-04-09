@@ -22,32 +22,30 @@ void BoardWindow::initWindowTItle() {
 }
 
 void BoardWindow::initMine(){
-	bool isNewWindow = !mineList.size();
 	for (int i = 0; i < boardArgs.row; i++) {
 		std::vector<MineArgs*> mines;
 		for (int j = 0; j < boardArgs.column; j++) {
-			MineArgs* mineArgs = (isNewWindow) ? new MineArgs() : mineList[i][j];
-			if (isNewWindow) mineArgs->button = new Fl_Button(MARGIN + BTN_MINE_SIZE * j, MARGIN + BTN_MINE_SIZE * i, BTN_MINE_SIZE, BTN_MINE_SIZE);
-			if (isNewWindow) mineArgs->button->callback([](Fl_Widget* w, void* args) {
+			MineArgs* mineArgs = new MineArgs();
+			mineArgs->button = new Fl_Button(MARGIN + BTN_MINE_SIZE * j, MARGIN + BTN_MINE_SIZE * i, BTN_MINE_SIZE, BTN_MINE_SIZE);
+			mineArgs->button->callback([](Fl_Widget* w, void* args) {
 				auto mineArgs = (MineArgs*)args;
 				if (mineArgs->parent->boardArgs.status == BOARD_STATUS_CONTINUE) {
-					if (mineArgs->isProcessing) return;
-					mineArgs->isProcessing = true;
+					mineArgs->parent->m_btnCallback->lock();
 					if (Fl::event_button() == FL_LEFT_MOUSE && mineArgs->parent->boardArgs.board[mineArgs->y][mineArgs->x] != MINE_FLAG)
 						mineArgs->board->leftClick(mineArgs->x, mineArgs->y);
 					if (Fl::event_button() == FL_RIGHT_MOUSE)
 						mineArgs->board->rightClick(mineArgs->x, mineArgs->y);
 					mineArgs->parent->update();
-					mineArgs->isProcessing = false;
+					mineArgs->parent->m_btnCallback->unlock();
 				}
 			}, (void*)mineArgs);
 			mineArgs->board = board;
 			mineArgs->x = j;
 			mineArgs->y = i;
 			mineArgs->parent = this;
-			if (isNewWindow) mines.push_back(mineArgs);
+			mines.push_back(mineArgs);
 		}
-		if (isNewWindow) mineList.push_back(mines);
+		mineList.push_back(mines);
 	}
 }
 
@@ -191,12 +189,10 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 	try {
 		switch (boardArgs.mode) {
 			case MODE_READ_BOARD: {
-				Fl_File_Chooser* chooser = new Fl_File_Chooser(CHOOSER_ARGS);
+				Fl_File_Chooser* chooser = new Fl_File_Chooser(boardArgs.path.c_str(), CHOOSER_ARGS);
 				chooser->callback([](Fl_File_Chooser* c, void* args) {
-					std::string path = c->value();
 					if (!c->visible()) {
-						std::ifstream file(path);
-						*((Board**)args) = new Board(file);
+						*((Board**)args) = new Board(c->value());
 					}
 				}, (void*)&b);
 				chooser->show();

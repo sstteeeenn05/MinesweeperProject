@@ -119,8 +119,10 @@ void Board::revealGrid(int x, int y) {
 
 Board::Board() = default;
 
-Board::Board(std::ifstream &inputFile) {
+Board::Board(const char *path) {
     boardArgs.mode = MODE_READ_BOARD;
+    boardArgs.path = path;
+    std::ifstream inputFile(path);
     inputFile >> boardArgs.row >> boardArgs.column;
     inputFile.get();
     if (boardArgs.row <= 0 && boardArgs.column <= 0) {

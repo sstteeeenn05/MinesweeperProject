@@ -28,7 +28,7 @@ public:
 
     Board();
     
-    explicit Board(std::ifstream &inputFile);
+    explicit Board(const char*);
 
     Board(int inputRow, int inputColumn, double randomRate);
 

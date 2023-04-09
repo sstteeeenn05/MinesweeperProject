@@ -25,9 +25,6 @@
 #include "FL/Fl_Spinner.H"
 #include "FL/Fl_Window.h"
 
-#define MAX_COL 50
-#define MAX_ROW 30
-
 class HomeWindow{
 	const int WINDOW_WIDTH = 400;
 	const int WINDOW_HEIGHT = 350;

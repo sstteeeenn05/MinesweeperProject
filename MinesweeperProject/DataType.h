@@ -10,7 +10,14 @@
 #include "FL/Fl_Radio_Round_Button.h"
 #include "FL/Fl_File_Chooser.h"
 
-#define CHOOSER_ARGS "board.txt", "Text Files(*.txt)", Fl_File_Chooser::SINGLE, "Select Board File"
+#define CHOOSER_ARGS "Text Files(*.txt)", Fl_File_Chooser::SINGLE, "Select Board File"
+
+#define DEF_COL 10
+#define DEF_ROW 10
+#define DEF_CNT 10
+#define MAX_COL 50
+#define MAX_ROW 30
+#define MAX_PERCENT 100
 
 class Board;
 class BoardWindow;
@@ -53,7 +60,7 @@ struct RadioArgs {
 	Fl_Spinner* iptNumber = nullptr, * iptColumn = nullptr, * iptRow = nullptr;
 	Fl_Button* btnChooser = nullptr, * btnRandom = nullptr;
 	std::string boardPath;
-	int row = 10, col = 10, number = 10;
+	int row = DEF_ROW, col = DEF_COL, number = DEF_CNT;
 };
 
 struct MineArgs {
@@ -61,7 +68,7 @@ struct MineArgs {
 	Board* board = nullptr;
 	BoardWindow* parent = nullptr;
 	bool isProcessing = false;
-	int x, y;
+	int x = 0, y = 0;
 };
 
 struct GameArgs {
@@ -77,12 +84,13 @@ struct RankArgs {
 struct BoardArgs {
 	std::vector<std::vector<char>> board;
 	std::vector<std::vector<char>> answer;
-	int row, column;
-	double randomRate;
+	int row = 0, column = 0;
+	double randomRate = 0;
 	int bombCount = 0;
     int flagCount = 0;
     int openBlankCount = 0;
     int remainBlankCount = 0;
 	int status = BOARD_STATUS_CONTINUE;
 	int mode = MODE_READ_BOARD;
+	std::string path = "board.txt";
 };
