@@ -201,6 +201,9 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 	auto boardWindow = (BoardWindow*)gameArgs->mainWindow;
 	boardWindow->mainWindow->show();
 
+	while (BoardWindow::getWindowCount()) Fl::wait();
+	fl_alert("Game Stopped");
+
 	gameArgs = new GameArgs();
 	radioArgs = new RadioArgs();
 	gameArgs->radioArgs = radioArgs;

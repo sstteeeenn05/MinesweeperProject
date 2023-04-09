@@ -1,5 +1,11 @@
 #include "BoardWindow.h"
 
+std::unordered_set<void*> BoardWindow::objAddrList = std::unordered_set<void*>();
+
+int BoardWindow::getWindowCount() {
+	return objAddrList.size();
+}
+
 BoardWindow::BoardWindow(Board* b) :board(b), boardArgs(b->getBoardArgs()) {
 
 	mainWindow = new Fl_Window(MARGIN * 2 + BTN_MINE_SIZE * boardArgs.column, MARGIN * 2 + BTN_MINE_SIZE * boardArgs.row);
@@ -10,6 +16,15 @@ BoardWindow::BoardWindow(Board* b) :board(b), boardArgs(b->getBoardArgs()) {
 	mainWindow->end();
 
 	initWindowTItle();
+	objAddrList.insert(this);
+}
+
+BoardWindow::~BoardWindow() {
+	delete board;
+	delete mainWindow;
+	delete resultWindow;
+	board = nullptr;
+	objAddrList.erase(this);
 }
 
 void BoardWindow::initWindowTItle() {
@@ -190,13 +205,9 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 		switch (boardArgs.mode) {
 			case MODE_READ_BOARD: {
 				Fl_File_Chooser* chooser = new Fl_File_Chooser(boardArgs.path.c_str(), CHOOSER_ARGS);
-				chooser->callback([](Fl_File_Chooser* c, void* args) {
-					if (!c->visible()) {
-						*((Board**)args) = new Board(c->value());
-					}
-				}, (void*)&b);
 				chooser->show();
 				while (chooser->visible()) Fl::wait();
+				if (chooser->count()) b = new Board(chooser->value());
 				break;
 			} case MODE_INPUT_RATE:
 				b=new Board(boardArgs.row, boardArgs.column, boardArgs.randomRate);
