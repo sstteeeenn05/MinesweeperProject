@@ -3,16 +3,17 @@
 #include <random>
 #include <exception>
 #include <queue>
+#include <fstream>
 
 void Board::initializeBoards() {
     boardArgs.board = std::vector<std::vector<char>>
-            (boardArgs.row, std::vector<char>(boardArgs.column, MINE_MASK));
+        (boardArgs.row, std::vector<char>(boardArgs.column, MINE_MASK));
 
     boardArgs.answer = std::vector<std::vector<char>>
-            (boardArgs.row, std::vector<char>(boardArgs.column, MINE_NULL));
+        (boardArgs.row, std::vector<char>(boardArgs.column, MINE_NULL));
 }
 
-void Board::calculateAnswerByInput(std::ifstream &inputFile) {
+void Board::calculateAnswerByInput(std::ifstream& inputFile) {
     for (int i = 0; i < boardArgs.row; i++) {
         for (int j = 0; j < boardArgs.column; j++) {
             if (inputFile.get() == MINE_MINE) {
@@ -93,10 +94,9 @@ void Board::revealGrid(int x, int y) {
     queue.push(Pos{x, y});
 
     while (!queue.empty()) {
-        
         const Pos tempPos = queue.front();
         queue.pop();
-        
+
         if (boardArgs.answer[tempPos.y][tempPos.x] == MINE_NULL &&
             (boardArgs.board[tempPos.y][tempPos.x] == MINE_MASK
              || boardArgs.board[tempPos.y][tempPos.x] == MINE_SUS)) {
@@ -113,13 +113,12 @@ void Board::revealGrid(int x, int y) {
 
         if (boardArgs.answer[tempPos.y][tempPos.x] != MINE_MINE && boardArgs.board[tempPos.y][tempPos.x] != MINE_FLAG)
             boardArgs.board[tempPos.y][tempPos.x] = boardArgs.answer[tempPos.y][tempPos.x];
-
     }
 }
 
 Board::Board() = default;
 
-Board::Board(const char *path) {
+Board::Board(const char* path) {
     boardArgs.mode = MODE_READ_BOARD;
     boardArgs.path = path;
     std::ifstream inputFile(path);
@@ -147,7 +146,6 @@ Board::Board(int inputRow, int inputColumn, double randomRate) {
     initializeBoards();
     randomTheBoard();
     countBlank();
-
 }
 
 Board::Board(int inputRow, int inputColumn, int mineCount) {
@@ -180,7 +178,7 @@ Board::Board(int inputRow, int inputColumn, int mineCount) {
 
 void Board::maskBoard() {
     boardArgs.status = BOARD_STATUS_CONTINUE;
-    std::for_each(boardArgs.board.begin(), boardArgs.board.end(), [&](std::vector<char> &i) {
+    std::for_each(boardArgs.board.begin(), boardArgs.board.end(), [&](std::vector<char>& i) {
         i = std::vector<char>(boardArgs.column, '#');
     });
 }
@@ -190,7 +188,7 @@ void Board::leftClick(int x, int y) {
 
     if (boardArgs.board[y][x] == MINE_FLAG) throw std::exception("Left click on flag.");
 
-    if(boardArgs.board[y][x]!=MINE_MASK && boardArgs.board[y][x]!=MINE_SUS)
+    if (boardArgs.board[y][x] != MINE_MASK && boardArgs.board[y][x] != MINE_SUS)
         throw std::exception("Left click on clicked grid.");
 
     if (boardArgs.answer[y][x] == MINE_MINE) {
@@ -199,7 +197,7 @@ void Board::leftClick(int x, int y) {
         return;
     }
 
-    revealGrid(x,y);
+    revealGrid(x, y);
 
     countBlank();
     if (boardArgs.remainBlankCount == 0)boardArgs.status = BOARD_STATUS_WIN;
@@ -207,9 +205,9 @@ void Board::leftClick(int x, int y) {
 
 void Board::rightClick(int x, int y) {
     if (!isCoordinateValid(x, y)) throw std::exception("X or Y out of range.");
-    if(boardArgs.board[y][x]!=MINE_MASK && boardArgs.board[y][x]!=MINE_SUS && boardArgs.board[y][x] != MINE_FLAG)
+    if (boardArgs.board[y][x] != MINE_MASK && boardArgs.board[y][x] != MINE_SUS && boardArgs.board[y][x] != MINE_FLAG)
         throw std::exception("Right click on clicked grid.");
-    
+
     constexpr char symbol[3] = {MINE_MASK, MINE_FLAG, MINE_SUS};
 
     for (int i = 0; i < 3; i++) {
@@ -222,6 +220,44 @@ void Board::rightClick(int x, int y) {
     }
 }
 
-const BoardArgs &Board::getBoardArgs() const {
+const BoardArgs& Board::getBoardArgs() const {
     return boardArgs;
+}
+
+void Board::print(int printOption) const {
+    switch (printOption) {
+    case PRINT_BOARD:
+        hout<<"\n";
+        for (const std::vector<char>& items : boardArgs.board) {
+            for (const char& item : items) hout<<item<<" ";
+            hout<<"\n";
+        }
+        break;
+        
+    case PRINT_ANSWER:
+        hout<<"\n";
+        for (const std::vector<char>& items : boardArgs.answer) {
+            for (const char& item : items) hout<<item<<" ";
+            hout<<"\n";
+        }
+        break;
+        
+    case PRINT_BOMB_COUNT:
+        hout<<boardArgs.bombCount;
+        break;
+        
+    case PRINT_FLAG_COUNT:
+        hout<<boardArgs.flagCount;
+        break;
+        
+    case PRINT_OPEN_BLANK:
+        hout<<boardArgs.openBlankCount;
+        break;
+        
+    case PRINT_REMAIN_BLANK:
+        hout<<boardArgs.remainBlankCount;
+        break;
+    default:
+        throw std::exception("Invalid use");
+    }
 }

@@ -1,8 +1,7 @@
 #pragma once
 
-#include <vector>
-#include <fstream>
 #include "DataType.h"
+#include "Handler.h"
 
 class Board {
 private:
@@ -28,7 +27,7 @@ public:
 
     Board();
     
-    explicit Board(const char*);
+    explicit Board(const char* path);
 
     Board(int inputRow, int inputColumn, double randomRate);
 
@@ -41,5 +40,7 @@ public:
     void rightClick(int x, int y);
 
     const BoardArgs &getBoardArgs() const;
+
+    void print(int printOption) const;
 
 };

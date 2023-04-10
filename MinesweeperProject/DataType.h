@@ -44,6 +44,23 @@ enum {
 	MINE_NULL = '0'
 };
 
+enum
+{
+	PRINT_BOARD,
+	PRINT_ANSWER,
+	PRINT_BOMB_COUNT,
+	PRINT_FLAG_COUNT,
+	PRINT_OPEN_BLANK,
+	PRINT_REMAIN_BLANK
+};
+
+enum
+{
+	STATE_STANDBY,
+	STATE_PLAYING,
+	STATE_GAME_OVER
+};
+
 struct Widget {
 	const char* text;
 	Fl_Callback* callback;
