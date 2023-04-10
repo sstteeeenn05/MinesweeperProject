@@ -81,7 +81,8 @@ struct RadioArgs {
 	Fl_Spinner* iptNumber, * iptColumn, * iptRow;
 	Fl_Button* btnChooser, * btnRandom;
 	std::string boardPath;
-	int row = DEF_ROW, col = DEF_COL, number = DEF_CNT;
+	int row = DEF_ROW, col = DEF_COL;
+	double number = DEF_CNT;
 };
 
 struct MineArgs {

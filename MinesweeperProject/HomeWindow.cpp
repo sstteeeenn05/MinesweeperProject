@@ -173,24 +173,26 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 	auto radioArgs = gameArgs->radioArgs;
 	radioArgs->iptNumber->do_callback();
 
-	try {
+	std::stringstream title("");
+	if (radioArgs->selection == MODE_READ_BOARD) title << "Load BoardFile " << radioArgs->boardPath;
+	if (radioArgs->selection == MODE_INPUT_RATE) title << "Load RandomRate " << radioArgs->col << " " << radioArgs->row << " " << radioArgs->number / MAX_PERCENT;
+	if (radioArgs->selection == MODE_INPUT_COUNT) title << "Load RandomCount " << radioArgs->col << " " << radioArgs->row << " " << radioArgs->number;
+
+	if (!Handler::execute(title.str().c_str(), [&] {
 		switch (radioArgs->selection) {
 			case MODE_READ_BOARD: {
-				if(!strlen(radioArgs->iptPath->value())) throw std::exception("Please select a board file or try another mode");
+				if (!radioArgs->boardPath.length()) throw std::exception("Please select a board file or try another mode");
 				gameArgs->board = new Board(radioArgs->iptPath->value());
 				break;
 			} case MODE_INPUT_COUNT: {
-				gameArgs->board = new Board(radioArgs->iptRow->value(), radioArgs->iptColumn->value(), (int)radioArgs->iptNumber->value());
+				gameArgs->board = new Board(radioArgs->row, radioArgs->col, (int)radioArgs->number);
 				break;
 			} case MODE_INPUT_RATE: {
-				gameArgs->board = new Board(radioArgs->iptRow->value(), radioArgs->iptColumn->value(), radioArgs->iptNumber->value() / MAX_PERCENT);
+				gameArgs->board = new Board(radioArgs->row, radioArgs->col, radioArgs->number / MAX_PERCENT);
 				break;
 			} default: throw std::exception("Logic error");
 		}
-	} catch (std::exception e) {
-		fl_alert(e.what());
-		return;
-	}
+	})) return;
 
 	gameArgs->mainWindow = new BoardWindow(gameArgs->board);
 	auto boardWindow = (BoardWindow*)gameArgs->mainWindow;

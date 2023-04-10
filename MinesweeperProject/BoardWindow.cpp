@@ -27,12 +27,9 @@ BoardWindow::~BoardWindow() {
 }
 
 void BoardWindow::initWindowTItle() {
-	std::stringstream* title = new std::stringstream();
-	title->str("");
-	title->clear();
-	(*title) << "Game (" << boardArgs.column << "x" << boardArgs.row << ") 0.0%" << std::endl;
-	mainWindow->label(title->str().c_str());
-	delete title;
+	std::stringstream title("");
+	title << "Game (" << boardArgs.column << "x" << boardArgs.row << ") 0.0%" << std::endl;
+	mainWindow->label(title.str().c_str());
 }
 
 void BoardWindow::initMine(){
@@ -64,11 +61,10 @@ void BoardWindow::initMine(){
 }
 
 void BoardWindow::update() {
-	std::stringstream* title = new std::stringstream();
-	(*title) << "Game (" << boardArgs.column << "x" << boardArgs.row << ") " << std::fixed << std::setprecision(1) <<
+	std::stringstream title("");
+	title << "Game (" << boardArgs.column << "x" << boardArgs.row << ") " << std::fixed << std::setprecision(1) <<
 		(double)boardArgs.openBlankCount / (boardArgs.openBlankCount + boardArgs.remainBlankCount) * 100 << "%" << std::endl;
-	mainWindow->label(title->str().c_str());
-	delete title;
+	mainWindow->label(title.str().c_str());
 
 	std::vector<std::future<void> > allocateTaskList;
 	for (auto& mines : mineList) for (auto& mine : mines) allocateTaskList.push_back(std::async(std::launch::async, [=] {
@@ -197,19 +193,33 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 	auto bw = (BoardWindow*)args;
 	auto& boardArgs = bw->boardArgs;
 	Board* b = nullptr;
-	try {
+	const char* path;
+
+	std::stringstream title("");
+	if (boardArgs.mode == MODE_READ_BOARD) {
+		Fl_File_Chooser* chooser = new Fl_File_Chooser(boardArgs.path.c_str(), CHOOSER_ARGS);
+		chooser->show();
+		while (chooser->visible()) Fl::wait();
+		if (!chooser->count()) {
+			fl_alert("Please select a file");
+			return;
+		}
+		path = chooser->value();
+		title << "Load BoardFile " << chooser->value();
+	}
+	if (boardArgs.mode == MODE_INPUT_RATE) title << "Load RandomRate " << boardArgs.column << " " << boardArgs.row << " " << boardArgs.randomRate;
+	if (boardArgs.mode == MODE_INPUT_COUNT) title << "Load RandomCount " << boardArgs.column << " " << boardArgs.row << " " << boardArgs.bombCount;
+
+	Handler::execute(title.str().c_str(), [&] {
 		switch (boardArgs.mode) {
-			case MODE_READ_BOARD: {
-				Fl_File_Chooser* chooser = new Fl_File_Chooser(boardArgs.path.c_str(), CHOOSER_ARGS);
-				chooser->show();
-				while (chooser->visible()) Fl::wait();
-				if (chooser->count()) b = new Board(chooser->value());
+			case MODE_READ_BOARD:
+				b = new Board(path);
 				break;
-			} case MODE_INPUT_RATE:
-				b=new Board(boardArgs.row, boardArgs.column, boardArgs.randomRate);
+			case MODE_INPUT_RATE:
+				b = new Board(boardArgs.row, boardArgs.column, boardArgs.randomRate);
 				break;
 			case MODE_INPUT_COUNT:
-				b=new Board(boardArgs.row, boardArgs.column, boardArgs.bombCount);
+				b = new Board(boardArgs.row, boardArgs.column, boardArgs.bombCount);
 				break;
 			default: throw std::exception("Logic error");
 		}
@@ -218,10 +228,7 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 		boardWindow->mainWindow->resize(bw->mainWindow->x(), bw->mainWindow->y(), boardWindow->mainWindow->w(), boardWindow->mainWindow->h());
 		boardWindow->mainWindow->show();
 		bw->closeGame(NULL, args);
-	} catch (std::exception e) {
-		fl_alert(e.what());
-		return;
-	}
+	});
 }
 
 void BoardWindow::submitScore(Fl_Widget* w, void* args) {

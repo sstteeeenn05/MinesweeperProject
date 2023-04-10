@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
 		toLower(mode);
 		if (mode == "commandfile") {
 			if (argc < 3) {
-				puts("Lost argument");
+				puts("Lost argument, shout be: CommandFile <Input File> <Output File>");
 				goto input;
 			}
 			openCommandFile(argv[2], argv[3]);
