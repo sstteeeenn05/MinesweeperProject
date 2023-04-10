@@ -11,7 +11,7 @@
 #define hout (*Handler::pipe)
 
 class Handler{
-	static void output();
+	static void output(bool);
 	static void resetPipe();
 public:
 	static std::stringstream* pipe;

@@ -2,7 +2,11 @@
 
 std::stringstream* Handler::pipe = new std::stringstream();
 
-void Handler::output() {
+void Handler::output(bool isSuccess) {
+	if (!isSuccess) {
+		std::cout << "Failed" << std::endl;
+		return;
+	}
 	std::string buffer = pipe->str();
 	if (!buffer.length()) {
 		std::cout << "Success" << std::endl;
@@ -17,15 +21,16 @@ void Handler::resetPipe() {
 }
 
 bool Handler::execute(const std::string commandName, std::function<void()> function) {
+	bool status = true;
 	std::cout << "<" << commandName << "> : ";
 	try {
 		function();
 	}
 	catch (std::exception e) {
 		std::cout << "Failed" << std::endl;
-		return false;
+		status = false;
 	}
-	output();
+	output(status);
 	resetPipe();
-	return true;
+	return status;
 }
