@@ -33,6 +33,9 @@
     <ClInclude Include="Handler.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="command.hpp">
+      <Filter>來源檔案</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

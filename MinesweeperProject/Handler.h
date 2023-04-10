@@ -14,6 +14,7 @@ class Handler{
 	static void output(bool);
 	static void resetPipe();
 public:
-	static std::stringstream* pipe;
+	static int method;
+	static std::stringstream* pipe,* ofstream;
 	static bool execute(const std::string, std::function<void()>);
 };

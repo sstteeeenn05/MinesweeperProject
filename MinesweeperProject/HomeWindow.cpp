@@ -36,7 +36,7 @@ void HomeWindow::initVariables() {
 	resultButtonList = {
 		{"New Game",&HomeWindow::startGame,(void*)gameArgs},
 		{"Leaderboard",&HomeWindow::openRank,(void*)rankArgs},
-		{"Exit",&HomeWindow::close}
+		{"Exit",&HomeWindow::close,(void*)mainWindow}
 	};
 }
 
@@ -210,6 +210,6 @@ void HomeWindow::openRank(Fl_Widget* w, void* args) {
 }
 
 void HomeWindow::close(Fl_Widget* w, void* args) {
-	w->~Fl_Widget();
-	exit(EXIT_SUCCESS);
+	if(args) ((Fl_Widget*)args)->~Fl_Widget();
+	else w->~Fl_Widget();
 }

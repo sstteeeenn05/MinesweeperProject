@@ -122,6 +122,7 @@ Board::Board(const char* path) {
     boardArgs.mode = MODE_READ_BOARD;
     boardArgs.path = path;
     std::ifstream inputFile(path);
+    if (inputFile.fail()) throw std::exception("File does not exist");
     inputFile >> boardArgs.row >> boardArgs.column;
     inputFile.get();
     if (boardArgs.row <= 0 && boardArgs.column <= 0) {
@@ -225,20 +226,21 @@ const BoardArgs& Board::getBoardArgs() const {
 }
 
 void Board::print(int printOption) const {
+    if (boardArgs.row == 0 || boardArgs.column == 0) throw std::exception("Board is not ready yet");
     switch (printOption) {
     case PRINT_BOARD:
-        hout<<"\n";
+        hout << std::endl;
         for (const std::vector<char>& items : boardArgs.board) {
             for (const char& item : items) hout<<item<<" ";
-            hout<<"\n";
+            hout << std::endl;
         }
         break;
         
     case PRINT_ANSWER:
-        hout<<"\n";
+        hout<< std::endl;
         for (const std::vector<char>& items : boardArgs.answer) {
             for (const char& item : items) hout<<item<<" ";
-            hout<<"\n";
+            hout << std::endl;
         }
         break;
         

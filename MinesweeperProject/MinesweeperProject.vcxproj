@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClInclude Include="Board.h" />
     <ClInclude Include="BoardWindow.h" />
+    <ClInclude Include="command.hpp" />
     <ClInclude Include="Handler.h" />
     <ClInclude Include="DataType.h" />
     <ClInclude Include="HomeWindow.h" />

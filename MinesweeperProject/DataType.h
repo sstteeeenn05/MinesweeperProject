@@ -25,6 +25,12 @@ class ConfigWindow;
 class RankWindow;
 
 enum {
+	METHOD_CMD_FILE,
+	METHOD_CMD_INPUT,
+	METHOD_GUI
+};
+
+enum {
 	MODE_READ_BOARD,
 	MODE_INPUT_COUNT,
 	MODE_INPUT_RATE
@@ -44,8 +50,7 @@ enum {
 	MINE_NULL = '0'
 };
 
-enum
-{
+enum {
 	PRINT_BOARD,
 	PRINT_ANSWER,
 	PRINT_BOMB_COUNT,
@@ -54,8 +59,7 @@ enum
 	PRINT_REMAIN_BLANK
 };
 
-enum
-{
+enum {
 	STATE_STANDBY,
 	STATE_PLAYING,
 	STATE_GAME_OVER
