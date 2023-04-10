@@ -1,18 +1,22 @@
+#include <algorithm>
 #include <cstring>
 #include "command.hpp"
+
+#define toLower(str) std::for_each(str.begin(), str.end(), [](auto& c) { c = tolower(c); });
 
 int main(int argc, char* argv[]) {
 	std::string mode = (argc > 1) ? argv[1] : "";
 	while (mode != "quit") {
-		if (mode == "CommandFile") {
+		toLower(mode);
+		if (mode == "commandfile") {
 			if (argc < 3) {
 				puts("Lost argument");
 				goto input;
 			}
 			openCommandFile(argv[2], argv[3]);
-		} else if (mode == "CommandInput") {
+		} else if (mode == "commandinput") {
 			openCommandInput();
-		} else if (mode == "GUI") {
+		} else if (mode == "gui") {
 			std::cout << "FLTK exit with code : " << openGUI() << std::endl;
 		} else {
 			puts("\n[Minesweeper Help] - Type \"quit\" to exit the program\n");
