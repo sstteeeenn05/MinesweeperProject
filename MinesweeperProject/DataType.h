@@ -46,39 +46,39 @@ enum {
 
 struct Widget {
 	const char* text;
-	const void* callback;
-	void* args = nullptr;
-	Fl_Widget* component = nullptr;
+	Fl_Callback* callback;
+	void* args;
+	Fl_Widget* component;
 };
 
 struct RadioArgs {
 	std::vector<Fl_Radio_Round_Button*> buttons;
-	Fl_Choice* mode = nullptr;
+	Fl_Choice* mode;
 	int selection = 0;
-	Fl_File_Chooser* chooser = nullptr;
-	Fl_Input* iptPath = nullptr;
-	Fl_Spinner* iptNumber = nullptr, * iptColumn = nullptr, * iptRow = nullptr;
-	Fl_Button* btnChooser = nullptr, * btnRandom = nullptr;
+	Fl_File_Chooser* chooser;
+	Fl_Input* iptPath;
+	Fl_Spinner* iptNumber, * iptColumn, * iptRow;
+	Fl_Button* btnChooser, * btnRandom;
 	std::string boardPath;
 	int row = DEF_ROW, col = DEF_COL, number = DEF_CNT;
 };
 
 struct MineArgs {
-	Fl_Button* button = nullptr;
-	Board* board = nullptr;
-	BoardWindow* parent = nullptr;
+	Fl_Button* button;
+	Board* board;
+	BoardWindow* parent;
 	bool isProcessing = false;
 	int x = 0, y = 0;
 };
 
 struct GameArgs {
-	BoardWindow* mainWindow = nullptr;
-	Board* board = nullptr;
-	RadioArgs* radioArgs = nullptr;
+	BoardWindow* mainWindow;
+	Board* board;
+	RadioArgs* radioArgs;
 };
 
 struct RankArgs {
-	RankWindow* window = nullptr;
+	RankWindow* window;
 };
 
 struct BoardArgs {

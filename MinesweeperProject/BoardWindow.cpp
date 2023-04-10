@@ -7,8 +7,6 @@ int BoardWindow::getWindowCount() {
 }
 
 BoardWindow::BoardWindow(Board* b) :board(b), boardArgs(b->getBoardArgs()) {
-
-	mainWindow = new Fl_Window(MARGIN * 2 + BTN_MINE_SIZE * boardArgs.column, MARGIN * 2 + BTN_MINE_SIZE * boardArgs.row);
 	mainWindow->begin();
 
 	initMine();
@@ -16,6 +14,7 @@ BoardWindow::BoardWindow(Board* b) :board(b), boardArgs(b->getBoardArgs()) {
 	mainWindow->end();
 
 	initWindowTItle();
+	initResultWindow();
 	objAddrList.insert(this);
 }
 
@@ -118,8 +117,7 @@ void BoardWindow::update() {
 			return;
 	}
 
-	initResultWindow();
-	resultWindow->show();
+	openResultWindow();
 }
 
 void BoardWindow::win() {
@@ -159,8 +157,6 @@ void BoardWindow::lose() {
 }
 
 void BoardWindow::initResultWindow() {
-	resultWindow = new Fl_Window(RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT, (boardArgs.status == BOARD_STATUS_WIN) ? "You Win!" : "You Lose");
-	resultWindow->hotspot(0, 0);
 	resultWindow->set_modal();
 	resultWindow->begin();
 
@@ -184,7 +180,7 @@ void BoardWindow::initResultButtonArgs() {
 	for (auto& button : resultButtonList) {
 		Fl_Button* component = new Fl_Button(MARGIN + (MARGIN + RESULT_BUTTON_WIDTH) * (buttonIndex++), MARGIN, RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT, button.text);
 		button.component = component;
-		button.component->callback((Fl_Callback*)button.callback, button.args);
+		button.component->callback(button.callback, button.args);
 	}
 }
 
@@ -194,7 +190,7 @@ void BoardWindow::playAgain(Fl_Widget* w, void* args) {
 	bw->initWindowTItle();
 	bw->update();
 	bw->mainWindow->redraw();
-	bw->closeResultWindow(bw->resultWindow, args);
+	bw->closeResultWindow();
 }
 
 void BoardWindow::newGame(Fl_Widget* w, void* args) {
@@ -233,16 +229,19 @@ void BoardWindow::submitScore(Fl_Widget* w, void* args) {
 
 }
 
-void BoardWindow::closeResultWindow(Fl_Widget* w, void* args) {
-	auto resultWindow = (Fl_Window*)w;
-	auto bw = (BoardWindow*)args;
-	resultWindow->~Fl_Window();
-	for (auto& button : bw->resultButtonList) button.component->~Fl_Widget();
+void BoardWindow::openResultWindow() {
+	resultWindow->label((boardArgs.status == BOARD_STATUS_WIN) ? "You Win!" : "You Lose");
+	resultWindow->hotspot(0, 0);
+	resultWindow->show();
+}
+
+void BoardWindow::closeResultWindow() {
+	resultWindow->hide();
 }
 
 void BoardWindow::closeGame(Fl_Widget* w, void* args){
 	auto bw = (BoardWindow*)args;
 	bw->mainWindow->~Fl_Window();
-	bw->closeResultWindow(bw->resultWindow, args);
+	bw->closeResultWindow();
 	delete bw;
 }

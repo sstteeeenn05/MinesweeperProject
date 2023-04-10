@@ -1,8 +1,6 @@
 #include "HomeWindow.h"
 
 HomeWindow::HomeWindow() {
-
-	mainWindow = new Fl_Window(WINDOW_WIDTH, WINDOW_HEIGHT, "Minesweeper");
 	mainWindow->begin();
 
 	logo = new Fl_Button(MARGIN, LOGO_Y, LOGO_WIDTH, LOGO_HEIGHT);
@@ -27,9 +25,6 @@ void HomeWindow::open() {
 }
 
 void HomeWindow::initVariables() {
-	gameArgs = new GameArgs();
-	rankArgs = new RankArgs();
-	radioArgs = new RadioArgs();
 	gameArgs->radioArgs = radioArgs;
 
 	radioList = {
@@ -49,7 +44,7 @@ void HomeWindow::initRadioArgs() {
 	new Fl_Light_Button(LABEL_WIDTH + MENU_MODE_WIDTH + MARGIN, COMPONENT_Y[0], 130, COMPONENT_HEIGHT, " Developer Mode");
 	radioArgs->mode = new Fl_Choice(LABEL_WIDTH, COMPONENT_Y[0], MENU_MODE_WIDTH, COMPONENT_HEIGHT, "Mode:");
 	int radioCount = 0;
-	for (auto &radio : radioList) radioArgs->mode->add(radio.text, "", (Fl_Callback*)radio.callback, radioArgs);
+	for (auto &radio : radioList) radioArgs->mode->add(radio.text, "", radio.callback, radioArgs);
 }
 
 void HomeWindow::initRadioReadBoard() {
@@ -169,7 +164,7 @@ void HomeWindow::initButtonArgs() {
 	for (auto &button : resultButtonList) {
 		Fl_Button* component = new Fl_Button(MARGIN + (MARGIN + BUTTON_WIDTH) * (buttonIndex++), BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, button.text);
 		button.component = component;
-		button.component->callback((Fl_Callback*)button.callback, button.args);
+		button.component->callback(button.callback, button.args);
 	}
 }
 

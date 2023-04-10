@@ -38,7 +38,8 @@ public:
 	Board* board = nullptr;
 	const BoardArgs& boardArgs;
 	std::vector<std::vector<MineArgs*> > mineList;
-	Fl_Window* mainWindow, * resultWindow;
+	Fl_Window* mainWindow = new Fl_Window(MARGIN * 2 + BTN_MINE_SIZE * boardArgs.column, MARGIN * 2 + BTN_MINE_SIZE * boardArgs.row);
+	Fl_Window* resultWindow = new Fl_Window(RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT);
 	std::vector<Widget> resultButtonList;
 	std::mutex* m_btnCallback = new std::mutex();
 
@@ -54,10 +55,11 @@ public:
 	void initResultWindow();
 	void initResultVariables();
 	void initResultButtonArgs();
+	void openResultWindow();
+	void closeResultWindow();
 
 	static void playAgain(Fl_Widget*, void*);
 	static void newGame(Fl_Widget*, void*);
 	static void submitScore(Fl_Widget*, void*);
-	static void closeResultWindow(Fl_Widget*, void*);
 	static void closeGame(Fl_Widget*, void*);
 };

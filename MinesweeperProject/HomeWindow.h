@@ -45,11 +45,11 @@ class HomeWindow{
 	const int BUTTON_HEIGHT = 40;
 	const int MARGIN = 10;
 public:
-	Fl_Button* logo = nullptr;
-	Fl_Window* mainWindow = nullptr;
-	GameArgs* gameArgs = nullptr;
-	RankArgs* rankArgs = nullptr;
-	RadioArgs* radioArgs = nullptr;
+	Fl_Window* mainWindow = new Fl_Window(WINDOW_WIDTH, WINDOW_HEIGHT, "Minesweeper");
+	Fl_Button* logo;
+	GameArgs* gameArgs = new GameArgs();
+	RankArgs* rankArgs = new RankArgs();
+	RadioArgs* radioArgs = new RadioArgs();
 	std::vector<Widget> radioList;
 	std::vector<Widget> resultButtonList;
 	HomeWindow();
