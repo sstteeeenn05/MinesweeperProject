@@ -46,22 +46,27 @@ class HomeWindow{
 	const int MARGIN = 10;
 public:
 	Fl_Window* mainWindow = new Fl_Window(WINDOW_WIDTH, WINDOW_HEIGHT, "Minesweeper");
+	Fl_Window* devWindow = new Fl_Window(300,100,"Dev Toolkit");
 	Fl_Button* logo;
 	GameArgs* gameArgs = new GameArgs();
 	RankArgs* rankArgs = new RankArgs();
-	RadioArgs* radioArgs = new RadioArgs();
-	std::vector<Widget> radioList;
-	std::vector<Widget> resultButtonList;
+	ModeArgs* modeArgs = new ModeArgs();
+	std::vector<Widget> modeList;
+	std::vector<Widget> buttonList;
 	HomeWindow();
+	~HomeWindow();
 
 	void open();
 
+	void initLogo();
 	void initVariables();
-	void initRadioArgs();
-	void initRadioReadBoard();
-	void initRadioInput();
-	void initButtonArgs();
-	void initDefaultRadio();
+	void createModeList();
+	void createBoardChooser();
+	void createInput();
+	void createButton();
+	void initDefaultChoice();
+
+	void createDevButton();
 
 	static void radioCallback(Fl_Widget*, void*);
 	static void startGame(Fl_Widget*, void*);

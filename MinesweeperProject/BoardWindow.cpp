@@ -1,6 +1,7 @@
 #include "BoardWindow.h"
 
 std::unordered_set<void*> BoardWindow::objAddrList = std::unordered_set<void*>();
+std::mutex BoardWindow::m_btnCallback;
 
 int BoardWindow::getWindowCount() {
 	return objAddrList.size();
@@ -41,13 +42,13 @@ void BoardWindow::initMine(){
 			mineArgs->button->callback([](Fl_Widget* w, void* args) {
 				auto mineArgs = (MineArgs*)args;
 				if (mineArgs->parent->boardArgs.status == BOARD_STATUS_CONTINUE) {
-					mineArgs->parent->m_btnCallback->lock();
+					BoardWindow::m_btnCallback.lock();
 					if (Fl::event_button() == FL_LEFT_MOUSE && mineArgs->parent->boardArgs.board[mineArgs->y][mineArgs->x] != MINE_FLAG)
 						mineArgs->board->leftClick(mineArgs->x, mineArgs->y);
 					if (Fl::event_button() == FL_RIGHT_MOUSE)
 						mineArgs->board->rightClick(mineArgs->x, mineArgs->y);
 					mineArgs->parent->update();
-					mineArgs->parent->m_btnCallback->unlock();
+					BoardWindow::m_btnCallback.unlock();
 				}
 			}, (void*)mineArgs);
 			mineArgs->board = board;
@@ -74,14 +75,13 @@ void BoardWindow::update() {
 	}));
 	for (auto& task : allocateTaskList) task.get();
 
-	for (int i = 0; i < boardArgs.row; i++) {
-		for (int j = 0; j < boardArgs.column; j++) {
-			auto currentButton = mineList[i][j]->button;
-			const auto currentValue = (int)boardArgs.board[i][j];
-			switch (currentValue) {
+	for (int i = 0; i < boardArgs.row; i++) for (int j = 0; j < boardArgs.column; j++) {
+		auto currentButton = mineList[i][j]->button;
+		const auto currentValue = (int)boardArgs.board[i][j];
+		switch (currentValue) {
 			case MINE_FLAG:
 			case MINE_SUS:
-				currentButton->image(PATH_ICON.at(currentValue));
+				currentButton->image(IMG_ICON.at(currentValue));
 				break;
 			case MINE_MASK:
 			case MINE_MINE:
@@ -90,16 +90,14 @@ void BoardWindow::update() {
 				currentButton->selection_color(FL_GRAY);
 				currentButton->activate();
 				break;
-			default: {
-				const char* label = new char[2] {boardArgs.board[i][j], '\0'};
-				currentButton->label(label);
-			}case MINE_NULL:
+			default: 
+				currentButton->label(new char[2] {boardArgs.board[i][j], '\0'});
+			case MINE_NULL:
 				currentButton->set();
 				currentButton->deactivate();
 				break;
-			}
-			Fl::awake();
 		}
+		Fl::awake();
 	}
 
 	switch (boardArgs.status) {
@@ -142,7 +140,7 @@ void BoardWindow::lose() {
 			auto currentButton = mineList[i][j]->button;
 			const auto currentValue = (int)boardArgs.answer[i][j];
 			if (currentValue == MINE_MINE)
-				currentButton->image(PATH_ICON.at(MINE_MINE));
+				currentButton->image(IMG_ICON.at(MINE_MINE));
 			else currentButton->deactivate();
 			currentButton->color(FL_RED);
 			currentButton->selection_color(FL_RED);
@@ -164,17 +162,17 @@ void BoardWindow::initResultWindow() {
 
 void BoardWindow::initResultVariables() {
 	resultButtonList = {
-		{"Play Again",&BoardWindow::playAgain,(void*)this},
-		{"Regenerate",&BoardWindow::newGame,(void*)this},
-		{"Submit Score",&BoardWindow::submitScore,(void*)this},
-		{"Exit",&BoardWindow::closeGame,(void*)this}
+		{"Play Again", &BoardWindow::playAgain, (void*)this},
+		{"Regenerate", &BoardWindow::newGame, (void*)this},
+		{"Submit Score", &BoardWindow::submitScore, (void*)this},
+		{"Exit",[](Fl_Widget* w,void* args) { delete (BoardWindow*)args; },(void*)this}
 	};
 }
 
 void BoardWindow::initResultButtonArgs() {
 	int buttonIndex = 0;
 	for (auto& button : resultButtonList) {
-		Fl_Button* component = new Fl_Button(MARGIN + (MARGIN + RESULT_BUTTON_WIDTH) * (buttonIndex++), MARGIN, RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT, button.text);
+		auto component = new Fl_Button(MARGIN + (MARGIN + RESULT_BUTTON_WIDTH) * (buttonIndex++), MARGIN, RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT, button.text);
 		button.component = component;
 		button.component->callback(button.callback, button.args);
 	}
@@ -186,18 +184,18 @@ void BoardWindow::playAgain(Fl_Widget* w, void* args) {
 	bw->initWindowTItle();
 	bw->update();
 	bw->mainWindow->redraw();
-	bw->closeResultWindow();
+	bw->resultWindow->hide();
 }
 
 void BoardWindow::newGame(Fl_Widget* w, void* args) {
 	auto bw = (BoardWindow*)args;
-	auto& boardArgs = bw->boardArgs;
-	Board* b = nullptr;
+	auto boardArgs = bw->boardArgs;
+	auto b = new Board();
 	const char* path;
 
 	std::stringstream title("");
 	if (boardArgs.mode == MODE_READ_BOARD) {
-		Fl_File_Chooser* chooser = new Fl_File_Chooser(boardArgs.path.c_str(), CHOOSER_ARGS);
+		auto chooser = new Fl_File_Chooser(boardArgs.path.c_str(), CHOOSER_ARGS);
 		chooser->show();
 		while (chooser->visible()) Fl::wait();
 		if (!chooser->count()) {
@@ -227,7 +225,7 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 		auto boardWindow = new BoardWindow(b);
 		boardWindow->mainWindow->resize(bw->mainWindow->x(), bw->mainWindow->y(), boardWindow->mainWindow->w(), boardWindow->mainWindow->h());
 		boardWindow->mainWindow->show();
-		bw->closeGame(NULL, args);
+		delete bw;
 	});
 }
 
@@ -240,15 +238,4 @@ void BoardWindow::openResultWindow() {
 	resultWindow->label((boardArgs.status == BOARD_STATUS_WIN) ? "You Win!" : "You Lose");
 	resultWindow->hotspot(0, 0);
 	resultWindow->show();
-}
-
-void BoardWindow::closeResultWindow() {
-	resultWindow->hide();
-}
-
-void BoardWindow::closeGame(Fl_Widget* w, void* args){
-	auto bw = (BoardWindow*)args;
-	bw->mainWindow->~Fl_Window();
-	bw->closeResultWindow();
-	delete bw;
 }

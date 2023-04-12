@@ -28,8 +28,9 @@ class BoardWindow{
 	const int RESULT_WINDOW_HEIGHT = RESULT_BUTTON_HEIGHT + MARGIN * 2;
 public:
 	static int getWindowCount();
+	static std::mutex m_btnCallback;
 
-	const std::map<int, Fl_Image*> PATH_ICON = {
+	const std::map<int, Fl_Image*> IMG_ICON = {
 		{MINE_MINE,(new Fl_PNG_Image("img/mine.png"))->copy(30, 30)},
 		{MINE_FLAG,(new Fl_PNG_Image("img/flag.png"))->copy(30, 30)},
 		{MINE_SUS,(new Fl_PNG_Image("img/sus.png"))->copy(30, 30)}
@@ -41,7 +42,6 @@ public:
 	Fl_Window* mainWindow = new Fl_Window(MARGIN * 2 + BTN_MINE_SIZE * boardArgs.column, MARGIN * 2 + BTN_MINE_SIZE * boardArgs.row);
 	Fl_Window* resultWindow = new Fl_Window(RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT);
 	std::vector<Widget> resultButtonList;
-	std::mutex* m_btnCallback = new std::mutex();
 
 	BoardWindow(Board*);
 	~BoardWindow();
@@ -56,10 +56,8 @@ public:
 	void initResultVariables();
 	void initResultButtonArgs();
 	void openResultWindow();
-	void closeResultWindow();
 
 	static void playAgain(Fl_Widget*, void*);
 	static void newGame(Fl_Widget*, void*);
 	static void submitScore(Fl_Widget*, void*);
-	static void closeGame(Fl_Widget*, void*);
 };

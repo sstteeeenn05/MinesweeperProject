@@ -72,7 +72,7 @@ struct Widget {
 	Fl_Widget* component;
 };
 
-struct RadioArgs {
+struct ModeArgs {
 	std::vector<Fl_Radio_Round_Button*> buttons;
 	Fl_Choice* mode;
 	int selection = 0;
@@ -96,7 +96,7 @@ struct MineArgs {
 struct GameArgs {
 	BoardWindow* mainWindow;
 	Board* board;
-	RadioArgs* radioArgs;
+	ModeArgs* modeArgs;
 };
 
 struct RankArgs {
