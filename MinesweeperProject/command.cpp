@@ -3,7 +3,7 @@
 #include "HomeWindow.h"
 
 int openCommandFile(std::string inputPath, std::string outputPath) {
-	Handler::method = METHOD_CMD_FILE;
+	Handler::init(METHOD_CMD_FILE, outputPath);
 	//Place the code here
 
 	//
@@ -11,7 +11,7 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 }
 
 int openCommandInput() {
-	Handler::method = METHOD_CMD_INPUT;
+	Handler::init(METHOD_CMD_INPUT);
 	//Place the code here
 
 	//
@@ -19,7 +19,7 @@ int openCommandInput() {
 }
 
 int openGUI() {
-	Handler::method = METHOD_GUI;
+	Handler::init(METHOD_GUI);
 	HomeWindow hw;
 	hw.open();
 	return Fl::run();

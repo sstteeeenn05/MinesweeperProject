@@ -1,10 +1,14 @@
 #include "BoardWindow.h"
 
-std::unordered_set<void*> BoardWindow::objAddrList = std::unordered_set<void*>();
-std::mutex BoardWindow::m_btnCallback;
+std::unordered_set<BoardWindow*> BoardWindow::objAddrList;
+std::mutex BoardWindow::btnCallbackLock;
 
 int BoardWindow::getWindowCount() {
 	return objAddrList.size();
+}
+
+void BoardWindow::closeAll() {
+	for (auto bw : objAddrList) delete bw;
 }
 
 BoardWindow::BoardWindow(Board* b) :board(b), boardArgs(b->getBoardArgs()) {
@@ -13,6 +17,7 @@ BoardWindow::BoardWindow(Board* b) :board(b), boardArgs(b->getBoardArgs()) {
 	initMine();
 
 	mainWindow->end();
+	mainWindow->callback([](Fl_Widget* w, void* args) { delete (BoardWindow*)args; }, (void*)this);
 
 	initWindowTItle();
 	initResultWindow();
@@ -28,7 +33,7 @@ BoardWindow::~BoardWindow() {
 }
 
 void BoardWindow::initWindowTItle() {
-	std::stringstream title("");
+	std::ostringstream title("");
 	title << "Game (" << boardArgs.column << "x" << boardArgs.row << ") 0.0%" << std::endl;
 	mainWindow->label(title.str().c_str());
 }
@@ -42,13 +47,13 @@ void BoardWindow::initMine(){
 			mineArgs->button->callback([](Fl_Widget* w, void* args) {
 				auto mineArgs = (MineArgs*)args;
 				if (mineArgs->parent->boardArgs.status == BOARD_STATUS_CONTINUE) {
-					BoardWindow::m_btnCallback.lock();
+					BoardWindow::btnCallbackLock.lock();
 					if (Fl::event_button() == FL_LEFT_MOUSE && mineArgs->parent->boardArgs.board[mineArgs->y][mineArgs->x] != MINE_FLAG)
 						mineArgs->board->leftClick(mineArgs->x, mineArgs->y);
 					if (Fl::event_button() == FL_RIGHT_MOUSE)
 						mineArgs->board->rightClick(mineArgs->x, mineArgs->y);
 					mineArgs->parent->update();
-					BoardWindow::m_btnCallback.unlock();
+					BoardWindow::btnCallbackLock.unlock();
 				}
 			}, (void*)mineArgs);
 			mineArgs->board = board;
@@ -62,7 +67,7 @@ void BoardWindow::initMine(){
 }
 
 void BoardWindow::update() {
-	std::stringstream title("");
+	std::ostringstream title("");
 	title << "Game (" << boardArgs.column << "x" << boardArgs.row << ") " << std::fixed << std::setprecision(1) <<
 		(double)boardArgs.openBlankCount / (boardArgs.openBlankCount + boardArgs.remainBlankCount) * 100 << "%" << std::endl;
 	mainWindow->label(title.str().c_str());
@@ -157,7 +162,8 @@ void BoardWindow::initResultWindow() {
 	initResultVariables();
 	initResultButtonArgs();
 
-	mainWindow->end();
+	resultWindow->end();
+	resultWindow->callback([](Fl_Widget* w, void* args) { delete (BoardWindow*)args; }, (void*)this);
 }
 
 void BoardWindow::initResultVariables() {
@@ -193,7 +199,7 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 	auto b = new Board();
 	const char* path;
 
-	std::stringstream title("");
+	std::ostringstream title("");
 	if (boardArgs.mode == MODE_READ_BOARD) {
 		auto chooser = new Fl_File_Chooser(boardArgs.path.c_str(), CHOOSER_ARGS);
 		chooser->show();

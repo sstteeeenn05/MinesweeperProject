@@ -39,9 +39,9 @@ void HomeWindow::initVariables() {
 	gameArgs->modeArgs = modeArgs;
 
 	modeList = {
-		{ "Read Board File", &HomeWindow::radioCallback },
-		{ "Input Mine Count", &HomeWindow::radioCallback },
-		{ "Input Respawn Rate", &HomeWindow::radioCallback }
+		{ "Read Board File", &HomeWindow::selectMode },
+		{ "Input Mine Count", &HomeWindow::selectMode },
+		{ "Input Respawn Rate", &HomeWindow::selectMode }
 	};
 
 	buttonList = {
@@ -54,18 +54,25 @@ void HomeWindow::initVariables() {
 void HomeWindow::createModeList() {
 	modeArgs->mode = new Fl_Choice(LABEL_WIDTH, COMPONENT_Y[0], MENU_MODE_WIDTH, COMPONENT_HEIGHT, "Mode:");
 	for (auto &item : modeList) modeArgs->mode->add(item.text, "", item.callback, modeArgs);
+	mainWindow->add(modeArgs->mode);
 
 	auto devButton = new Fl_Light_Button(LABEL_WIDTH + MENU_MODE_WIDTH + MARGIN, COMPONENT_Y[0], 130, COMPONENT_HEIGHT, " Developer Mode");
 	devButton->callback([](Fl_Widget* w, void* args) {
 		auto devButton = (Fl_Light_Button*)w;
 		auto devWindow = (Fl_Window*)args;
-		if (devButton->value()) devWindow->show();
-		else devWindow->hide();
+		if (devButton->value()) {
+			Handler::enableOutput();
+			devButton->parent()->show();
+			devWindow->show();
+		} else {
+			Handler::disableOutput();
+			devWindow->hide();
+		}
 	},devWindow);
+	mainWindow->add(devButton);
 }
 
 void HomeWindow::createBoardChooser() {
-
 	auto chooser = new Fl_File_Chooser("board.txt", CHOOSER_ARGS);
 	auto iptPath = new Fl_Input(LABEL_WIDTH, COMPONENT_Y[1], PATH_WIDTH, COMPONENT_HEIGHT, "Path:");
 	auto btnChooser = new Fl_Button(WINDOW_WIDTH - CHOOSER_WIDTH - MARGIN, COMPONENT_Y[1], CHOOSER_WIDTH, COMPONENT_HEIGHT, "...");
@@ -87,6 +94,9 @@ void HomeWindow::createBoardChooser() {
 		auto modeArgs = (ModeArgs*)args;
 		modeArgs->chooser->show();
 	}, modeArgs);
+
+	mainWindow->add(iptPath);
+	mainWindow->add(btnChooser);
 }
 
 void HomeWindow::createInput() {
@@ -140,14 +150,28 @@ void HomeWindow::createInput() {
 
 		modeArgs->iptNumber->value(modeArgs->number);
 	}, modeArgs);
+
+	mainWindow->add(iptColumn);
+	mainWindow->add(iptRow);
+	mainWindow->add(iptNumber);
+	mainWindow->add(btnRandom);
+}
+
+void HomeWindow::createButton() {
+	int buttonIndex = 0;
+	for (auto& button : buttonList) {
+		Fl_Button* component = new Fl_Button(MARGIN + (MARGIN + BUTTON_WIDTH) * (buttonIndex++), BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, button.text);
+		button.component = component;
+		button.component->callback(button.callback, button.args);
+	}
 }
 
 void HomeWindow::initDefaultChoice(){
 	modeArgs->mode->value(0);
-	radioCallback(NULL, modeArgs);
+	selectMode(NULL, modeArgs);
 }
 
-void HomeWindow::radioCallback(Fl_Widget* w, void* args) {
+void HomeWindow::selectMode(Fl_Widget* w, void* args) {
 	srand(time(NULL));
 	auto modeArgs = (ModeArgs*)args;
 	modeArgs->selection = modeArgs->mode->value();
@@ -176,21 +200,12 @@ void HomeWindow::radioCallback(Fl_Widget* w, void* args) {
 	modeArgs->iptNumber->do_callback();
 }
 
-void HomeWindow::createButton() {
-	int buttonIndex = 0;
-	for (auto &button : buttonList) {
-		Fl_Button* component = new Fl_Button(MARGIN + (MARGIN + BUTTON_WIDTH) * (buttonIndex++), BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, button.text);
-		button.component = component;
-		button.component->callback(button.callback, button.args);
-	}
-}
-
 void HomeWindow::startGame(Fl_Widget* w, void* args) {
 	auto gameArgs = (GameArgs*)args;
 	auto modeArgs = gameArgs->modeArgs;
 	modeArgs->iptNumber->do_callback();
 
-	std::stringstream title("");
+	std::ostringstream title("");
 	if (modeArgs->selection == MODE_READ_BOARD) title << "Load BoardFile " << modeArgs->boardPath;
 	if (modeArgs->selection == MODE_INPUT_RATE) title << "Load RandomRate " << modeArgs->col << " " << modeArgs->row << " " << modeArgs->number / MAX_PERCENT;
 	if (modeArgs->selection == MODE_INPUT_COUNT) title << "Load RandomCount " << modeArgs->col << " " << modeArgs->row << " " << modeArgs->number;
@@ -229,6 +244,8 @@ void HomeWindow::openRank(Fl_Widget* w, void* args) {
 }
 
 void HomeWindow::close(Fl_Widget* w, void* args) {
-	auto window = ((HomeWindow*)args)->mainWindow;
-	window->hide();
+	auto hw = (HomeWindow*)args;
+	BoardWindow::closeAll();
+	hw->devWindow->hide();
+	hw->mainWindow->hide();
 }

@@ -11,7 +11,6 @@
 #include "Board.h"
 #include "BoardWindow.h"
 #include "RankWindow.h"
-#include "DataType.h"
 
 #include "FL/Fl.h"
 #include "FL/fl_ask.H"
@@ -68,7 +67,7 @@ public:
 
 	void createDevButton();
 
-	static void radioCallback(Fl_Widget*, void*);
+	static void selectMode(Fl_Widget*, void*);
 	static void startGame(Fl_Widget*, void*);
 	static void openRank(Fl_Widget*, void*);
 	static void close(Fl_Widget*, void*);

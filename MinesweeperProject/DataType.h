@@ -25,6 +25,7 @@ class ConfigWindow;
 class RankWindow;
 
 enum {
+	METHOD_PENDING,
 	METHOD_CMD_FILE,
 	METHOD_CMD_INPUT,
 	METHOD_GUI

@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cstring>
-#include "command.hpp"
+#include <cstdio>
+#include <string>
+#include "command.cpp"
 
 #define toLower(str) std::for_each(str.begin(), str.end(), [](auto& c) { c = tolower(c); });
 
@@ -31,6 +33,7 @@ int main(int argc, char* argv[]) {
 			puts("\tThe result will output to the stdout and the window\n");
 		}
 		input:
+		Handler::init(METHOD_PENDING);
 		printf("MineSweeper.exe > ");
 		std::cin >> mode;
 	}

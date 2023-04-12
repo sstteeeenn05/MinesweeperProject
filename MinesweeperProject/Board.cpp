@@ -231,33 +231,33 @@ void Board::print(int printOption) const {
     case PRINT_BOARD:
         hout << std::endl;
         for (const std::vector<char>& items : boardArgs.board) {
-            for (const char& item : items) hout<<item<<" ";
+            for (const char& item : items) hout << item << " ";
             hout << std::endl;
         }
         break;
         
     case PRINT_ANSWER:
-        hout<< std::endl;
+        hout << std::endl;
         for (const std::vector<char>& items : boardArgs.answer) {
-            for (const char& item : items) hout<<item<<" ";
+            for (const char& item : items) hout << item << " ";
             hout << std::endl;
         }
         break;
         
     case PRINT_BOMB_COUNT:
-        hout<<boardArgs.bombCount;
+        hout << boardArgs.bombCount;
         break;
         
     case PRINT_FLAG_COUNT:
-        hout<<boardArgs.flagCount;
+        hout << boardArgs.flagCount;
         break;
         
     case PRINT_OPEN_BLANK:
-        hout<<boardArgs.openBlankCount;
+        hout << boardArgs.openBlankCount;
         break;
         
     case PRINT_REMAIN_BLANK:
-        hout<<boardArgs.remainBlankCount;
+        hout << boardArgs.remainBlankCount;
         break;
     default:
         throw std::exception("Invalid use");

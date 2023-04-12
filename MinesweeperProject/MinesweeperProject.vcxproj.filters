@@ -33,7 +33,7 @@
     <ClInclude Include="Handler.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="command.hpp">
+    <ClInclude Include="command.cpp">
       <Filter>來源檔案</Filter>
     </ClInclude>
   </ItemGroup>
