@@ -3,7 +3,10 @@
 #include "Handler.h"
 #include "HomeWindow.h"
 
+#define TEST
+
 int openCommandFile(std::string inputPath, std::string outputPath) {
+#ifndef TEST
 	Handler::init(METHOD_CMD_FILE, outputPath);
 	//Place the code here
 	std::string command;
@@ -76,6 +79,7 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 		}
 		file.close();
 	}
+#endif
 	return 0;
 }
 

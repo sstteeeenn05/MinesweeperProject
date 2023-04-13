@@ -7,21 +7,12 @@ int BoardWindow::getWindowCount() {
 	return objAddrList.size();
 }
 
-void BoardWindow::closeAll() {
-	for (auto bw : objAddrList) delete bw;
+bool BoardWindow::isWindowAvailable(BoardWindow* bw) {
+	return objAddrList.find(bw) != objAddrList.end();
 }
 
-BoardWindow::BoardWindow(Board* b) :board(b), boardArgs(b->getBoardArgs()) {
-	mainWindow->begin();
-
-	initMine();
-
-	mainWindow->end();
-	mainWindow->callback([](Fl_Widget* w, void* args) { delete (BoardWindow*)args; }, (void*)this);
-
-	initWindowTItle();
-	initResultWindow();
-	objAddrList.insert(this);
+void BoardWindow::closeAll() {
+	for (auto bw : objAddrList) delete bw;
 }
 
 BoardWindow::~BoardWindow() {
@@ -30,6 +21,25 @@ BoardWindow::~BoardWindow() {
 	delete resultWindow;
 	board = nullptr;
 	objAddrList.erase(this);
+}
+
+void BoardWindow::reload(int x, int y) {
+	mainWindow->resize(
+		x == -1 ? mainWindow->x() : x,
+		y == -1 ? mainWindow->y() : y,
+		MARGIN * 2 + BTN_MINE_SIZE * boardArgs.column,
+		MARGIN * 2 + BTN_MINE_SIZE * boardArgs.row
+	);
+	removeMine();
+
+	mainWindow->begin();
+	initMine();
+	mainWindow->end();
+	mainWindow->callback([](Fl_Widget* w, void* args) { delete (BoardWindow*)args; }, (void*)this);
+
+	initWindowTItle();
+	initResultWindow();
+	objAddrList.insert(this);
 }
 
 void BoardWindow::initWindowTItle() {
@@ -64,6 +74,14 @@ void BoardWindow::initMine(){
 		}
 		mineList.push_back(mines);
 	}
+}
+
+void BoardWindow::removeMine() {
+	for (auto& mines : mineList) for (auto& mine : mines) {
+		delete mine->button;
+		delete mine;
+	}
+	mineList.clear();
 }
 
 void BoardWindow::update() {
@@ -191,17 +209,20 @@ void BoardWindow::playAgain(Fl_Widget* w, void* args) {
 	bw->update();
 	bw->mainWindow->redraw();
 	bw->resultWindow->hide();
+	bw->board->startGame();
 }
 
 void BoardWindow::newGame(Fl_Widget* w, void* args) {
-	auto bw = (BoardWindow*)args;
-	auto boardArgs = bw->boardArgs;
-	auto b = new Board();
-	const char* path;
+	auto oldBoardWindow = (BoardWindow*)args;
+	auto newBoardWindow = new BoardWindow();
+	auto &oldBoardArgs = oldBoardWindow->boardArgs;
+	auto& newBoardArgs = newBoardWindow->boardArgs;
+	auto newBoard = newBoardWindow->board;
 
 	std::ostringstream title("");
-	if (boardArgs.mode == MODE_READ_BOARD) {
-		auto chooser = new Fl_File_Chooser(boardArgs.path.c_str(), CHOOSER_ARGS);
+	const char* path;
+	if (oldBoardArgs.mode == MODE_READ_BOARD) {
+		auto chooser = new Fl_File_Chooser(oldBoardArgs.path.c_str(), CHOOSER_ARGS);
 		chooser->show();
 		while (chooser->visible()) Fl::wait();
 		if (!chooser->count()) {
@@ -211,28 +232,31 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 		path = chooser->value();
 		title << "Load BoardFile " << chooser->value();
 	}
-	if (boardArgs.mode == MODE_INPUT_RATE) title << "Load RandomRate " << boardArgs.column << " " << boardArgs.row << " " << boardArgs.randomRate;
-	if (boardArgs.mode == MODE_INPUT_COUNT) title << "Load RandomCount " << boardArgs.column << " " << boardArgs.row << " " << boardArgs.bombCount;
+	if (oldBoardArgs.mode == MODE_INPUT_RATE) title << "Load RandomRate " << oldBoardArgs.column << " " << oldBoardArgs.row << " " << oldBoardArgs.randomRate;
+	if (oldBoardArgs.mode == MODE_INPUT_COUNT) title << "Load RandomCount " << oldBoardArgs.column << " " << oldBoardArgs.row << " " << oldBoardArgs.bombCount;
 
-	Handler::execute(title.str().c_str(), [&] {
-		switch (boardArgs.mode) {
+	if (!Handler::execute(title.str().c_str(), [&] {
+		switch (oldBoardArgs.mode) {
 			case MODE_READ_BOARD:
-				b = new Board(path);
+				newBoard->load(path);
 				break;
 			case MODE_INPUT_RATE:
-				b = new Board(boardArgs.row, boardArgs.column, boardArgs.randomRate);
+				newBoard->load(oldBoardArgs.row, oldBoardArgs.column, oldBoardArgs.randomRate);
 				break;
 			case MODE_INPUT_COUNT:
-				b = new Board(boardArgs.row, boardArgs.column, boardArgs.bombCount);
+				newBoard->load(oldBoardArgs.row, oldBoardArgs.column, oldBoardArgs.bombCount);
 				break;
 			default: throw std::exception("Logic error");
 		}
-		if (b == nullptr) throw std::exception("Please select a file");
-		auto boardWindow = new BoardWindow(b);
-		boardWindow->mainWindow->resize(bw->mainWindow->x(), bw->mainWindow->y(), boardWindow->mainWindow->w(), boardWindow->mainWindow->h());
-		boardWindow->mainWindow->show();
-		delete bw;
-	});
+	})) {
+		delete newBoardWindow;
+		return;
+	}
+
+	newBoard->startGame();
+	newBoardWindow->reload(oldBoardWindow->mainWindow->x(), oldBoardWindow->mainWindow->y());
+	newBoardWindow->mainWindow->show();
+	delete oldBoardWindow;
 }
 
 void BoardWindow::submitScore(Fl_Widget* w, void* args) {

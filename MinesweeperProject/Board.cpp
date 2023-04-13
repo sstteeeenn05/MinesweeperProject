@@ -120,9 +120,6 @@ Board::Board() = default;
 
 void Board::load(const char* path) {
 	if (boardArgs.state != STATE_STANDBY) throw std::exception("not Standby");
-
-    boardArgs.mode = MODE_READ_BOARD;
-    boardArgs.path = path;
     std::ifstream inputFile(path);
     if (inputFile.fail()) throw std::exception("File does not exist");
     inputFile >> boardArgs.row >> boardArgs.column;
@@ -132,6 +129,9 @@ void Board::load(const char* path) {
         throw std::exception("Row or column out of range.");
     }
 
+    boardArgs.mode = MODE_READ_BOARD;
+    boardArgs.path = path;
+
     initializeBoards();
     calculateAnswerByInput(inputFile);
     inputFile.close();
@@ -140,12 +140,12 @@ void Board::load(const char* path) {
 
 void Board::load(int inputRow, int inputColumn, double randomRate) {
 	if (boardArgs.state != STATE_STANDBY) throw std::exception("not Standby");
+    if (inputRow <= 0 || inputColumn <= 0) throw std::exception("Row or column out of range.");
+    if (randomRate < 0) throw std::exception("Random rate out of range.");
     boardArgs.mode = MODE_INPUT_RATE;
     boardArgs.randomRate = randomRate;
     boardArgs.row = inputRow;
     boardArgs.column = inputColumn;
-    if (boardArgs.row <= 0 || boardArgs.column <= 0) throw std::exception("Row or column out of range.");
-    if (randomRate < 0) throw std::exception("Random rate out of range.");
 
     initializeBoards();
     randomTheBoard();
@@ -154,11 +154,11 @@ void Board::load(int inputRow, int inputColumn, double randomRate) {
 
 void Board::load(int inputRow, int inputColumn, int mineCount) {
 	if (boardArgs.state != STATE_STANDBY) throw std::exception("not Standby");
+    if (inputRow <= 0 || inputColumn <= 0) throw std::exception("Row or column out of range.");
+    if (mineCount > inputRow * inputColumn) throw std::exception("Mine count out of range.");
     boardArgs.mode = MODE_INPUT_COUNT;
     boardArgs.row = inputRow;
     boardArgs.column = inputColumn;
-    if (boardArgs.row <= 0 || boardArgs.column <= 0) throw std::exception("Row or column out of range.");
-    if (mineCount > boardArgs.row * boardArgs.column) throw std::exception("Mine count out of range.");
     boardArgs.bombCount = mineCount;
 
     initializeBoards();
@@ -189,6 +189,7 @@ void Board::startGame() {
 
 void Board::maskBoard() {
     boardArgs.status = BOARD_STATUS_CONTINUE;
+    boardArgs.state = STATE_STANDBY;
     std::for_each(boardArgs.board.begin(), boardArgs.board.end(), [&](std::vector<char>& i) {
         i = std::vector<char>(boardArgs.column, '#');
     });

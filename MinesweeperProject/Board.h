@@ -27,7 +27,7 @@ public:
 
     Board();
     
-     void load(const char* path);
+    void load(const char* path);
 
     void load(int inputRow, int inputColumn, double randomRate);
 

@@ -210,32 +210,39 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 	if (modeArgs->selection == MODE_INPUT_RATE) title << "Load RandomRate " << modeArgs->col << " " << modeArgs->row << " " << modeArgs->number / MAX_PERCENT;
 	if (modeArgs->selection == MODE_INPUT_COUNT) title << "Load RandomCount " << modeArgs->col << " " << modeArgs->row << " " << modeArgs->number;
 
+	gameArgs->window = new BoardWindow();
+	auto bw = gameArgs->window;
+	auto board = bw->board;
+
 	if (!Handler::execute(title.str().c_str(), [&] {
 		switch (modeArgs->selection) {
 			case MODE_READ_BOARD: {
 				if (!modeArgs->boardPath.length()) throw std::exception("Please select a board file or try another mode");
-				gameArgs->board = new Board(modeArgs->iptPath->value());
+				board->load(modeArgs->iptPath->value());
 				break;
 			} case MODE_INPUT_COUNT: {
-				gameArgs->board = new Board(modeArgs->row, modeArgs->col, (int)modeArgs->number);
+				board->load(modeArgs->row, modeArgs->col, (int)modeArgs->number);
 				break;
 			} case MODE_INPUT_RATE: {
-				gameArgs->board = new Board(modeArgs->row, modeArgs->col, modeArgs->number / MAX_PERCENT);
+				board->load(modeArgs->row, modeArgs->col, modeArgs->number / MAX_PERCENT);
 				break;
 			} default: throw std::exception("Logic error");
 		}
-	})) return;
+	})) {
+		delete bw;
+		return;
+	}
 
-	gameArgs->mainWindow = new BoardWindow(gameArgs->board);
-	auto boardWindow = (BoardWindow*)gameArgs->mainWindow;
-	boardWindow->mainWindow->show();
-
-	while (BoardWindow::getWindowCount()) Fl::wait();
-	fl_alert("Game Stopped");
+	board->startGame();
+	bw->reload(-1, -1);
+	bw->mainWindow->show();
 
 	gameArgs = new GameArgs();
 	modeArgs = new ModeArgs();
 	gameArgs->modeArgs = modeArgs;
+
+	while (BoardWindow::isWindowAvailable(bw)) Fl::wait();
+	fl_alert("Game Stopped");
 }
 
 void HomeWindow::openRank(Fl_Widget* w, void* args) {

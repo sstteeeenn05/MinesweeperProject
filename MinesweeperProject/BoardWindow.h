@@ -27,6 +27,7 @@ class BoardWindow{
 	const int RESULT_WINDOW_HEIGHT = RESULT_BUTTON_HEIGHT + MARGIN * 2;
 public:
 	static std::mutex btnCallbackLock;
+	static bool isWindowAvailable(BoardWindow*);
 	static int getWindowCount();
 	static void closeAll();
 
@@ -36,17 +37,21 @@ public:
 		{MINE_SUS,(new Fl_PNG_Image("img/sus.png"))->copy(30, 30)}
 	};
 
-	Board* board = nullptr;
-	const BoardArgs& boardArgs;
+	Board* board = new Board();
+	const BoardArgs& boardArgs = board->getBoardArgs();
 	std::vector<std::vector<MineArgs*> > mineList;
 	Fl_Window* mainWindow = new Fl_Window(MARGIN * 2 + BTN_MINE_SIZE * boardArgs.column, MARGIN * 2 + BTN_MINE_SIZE * boardArgs.row);
 	Fl_Window* resultWindow = new Fl_Window(RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT);
 	std::vector<Widget> resultButtonList;
 
+	BoardWindow() = default;
 	BoardWindow(Board*);
 	~BoardWindow();
 
+	void reload(int, int);
+
 	void initMine();
+	void removeMine();
 	void initWindowTItle();
 	void update();
 	void win();

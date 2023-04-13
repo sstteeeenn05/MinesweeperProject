@@ -96,8 +96,7 @@ struct MineArgs {
 };
 
 struct GameArgs {
-	BoardWindow* mainWindow;
-	Board* board;
+	BoardWindow* window;
 	ModeArgs* modeArgs;
 };
 
