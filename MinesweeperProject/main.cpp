@@ -7,21 +7,21 @@
 #define toLower(str) std::for_each(str.begin(), str.end(), [](auto& c) { c = tolower(c); });
 
 int main(int argc, char* argv[]) {
-	std::string mode = (argc > 1) ? argv[1] : "";
-	while (mode != "quit") {
-		toLower(mode);
-		if (mode == "commandfile") {
+	std::string command = (argc > 1) ? argv[1] : "help";
+	while (command != "exit") {
+		toLower(command);
+		if (command == "commandfile") {
 			if (argc < 3) {
 				puts("Lost argument, shout be: CommandFile <Input File> <Output File>");
 				goto input;
 			}
 			openCommandFile(argv[2], argv[3]);
-		} else if (mode == "commandinput") {
+		} else if (command == "commandinput") {
 			openCommandInput();
-		} else if (mode == "gui") {
+		} else if (command == "gui") {
 			std::cout << "FLTK exit with code : " << openGUI() << std::endl;
-		} else {
-			puts("\n[Minesweeper Help] - Type \"quit\" to exit the program\n");
+		} else if (command == "help") {
+			puts("\n[Minesweeper Help] - Type \"exit\" to exit the program\n");
 			puts("File Stream Mode: CommandFile <Input File> <Output File>");
 			puts("\tRun Minesweeper command by reading .txt file");
 			puts("\tThe result will output to the specified file\n");
@@ -30,12 +30,12 @@ int main(int argc, char* argv[]) {
 			puts("\tThe result will output to the stdout\n");
 			puts("Graphics User Interface Mode: GUI");
 			puts("\tRun Minesweeper command by FLTK window");
-			puts("\tThe result will output to the stdout and the window\n");
-		}
+			puts("\tThe result will output to the stdout(with dev mode on) and the window");
+		} else std::cout << "'" << command << "' - Unknown Command. Type 'help' to view all command" << std::endl;
 		input:
 		Handler::init(METHOD_PENDING);
-		printf("MineSweeper.exe > ");
-		std::cin >> mode;
+		printf("\nMineSweeper.exe > ");
+		std::cin >> command;
 	}
 	return 0;
 }
