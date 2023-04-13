@@ -27,11 +27,11 @@ public:
 
     Board();
     
-    explicit Board(const char* path);
+     void load(const char* path);
 
-    Board(int inputRow, int inputColumn, double randomRate);
+    void load(int inputRow, int inputColumn, double randomRate);
 
-    Board(int inputRow, int inputColumn, int mineCount);
+    void load(int inputRow, int inputColumn, int mineCount);
 
 	void startGame();
 

@@ -118,7 +118,9 @@ void Board::revealGrid(int x, int y) {
 
 Board::Board() = default;
 
-Board::Board(const char* path) {
+void Board::load(const char* path) {
+	if (boardArgs.state != STATE_STANDBY) throw std::exception("not Standby");
+
     boardArgs.mode = MODE_READ_BOARD;
     boardArgs.path = path;
     std::ifstream inputFile(path);
@@ -136,7 +138,8 @@ Board::Board(const char* path) {
     countBlank();
 }
 
-Board::Board(int inputRow, int inputColumn, double randomRate) {
+void Board::load(int inputRow, int inputColumn, double randomRate) {
+	if (boardArgs.state != STATE_STANDBY) throw std::exception("not Standby");
     boardArgs.mode = MODE_INPUT_RATE;
     boardArgs.randomRate = randomRate;
     boardArgs.row = inputRow;
@@ -149,7 +152,8 @@ Board::Board(int inputRow, int inputColumn, double randomRate) {
     countBlank();
 }
 
-Board::Board(int inputRow, int inputColumn, int mineCount) {
+void Board::load(int inputRow, int inputColumn, int mineCount) {
+	if (boardArgs.state != STATE_STANDBY) throw std::exception("not Standby");
     boardArgs.mode = MODE_INPUT_COUNT;
     boardArgs.row = inputRow;
     boardArgs.column = inputColumn;
@@ -179,6 +183,7 @@ Board::Board(int inputRow, int inputColumn, int mineCount) {
 
 void Board::startGame() {
 	if (boardArgs.row <= 0 || boardArgs.column <= 0) throw std::exception("not load yet");
+	if (boardArgs.state != STATE_STANDBY) throw std::exception("wrong state");
 	boardArgs.state = STATE_PLAYING;
 }
 
@@ -240,7 +245,12 @@ const BoardArgs& Board::getBoardArgs() const {
 }
 
 void Board::print(int printOption) const {
-    if (boardArgs.row == 0 || boardArgs.column == 0) throw std::exception("Board is not ready yet");
+	if (printOption == PRINT_STATE) {
+		std::string list[3] = { "Standby","Playing","GameOver" };
+		hout << list[boardArgs.state];
+		return;
+	}
+	if (boardArgs.row == 0 || boardArgs.column == 0) throw std::exception("Board is not ready yet");
     switch (printOption) {
     case PRINT_BOARD:
         hout << std::endl;
