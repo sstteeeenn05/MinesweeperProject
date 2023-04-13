@@ -1,0 +1,101 @@
+Handler::init(METHOD_CMD_INPUT);
+	//Place the code here
+	Board board;
+	std::string input;
+	int status = 0;
+	while (std::cin >> input)
+	{
+		if (input == "Print")
+		{
+			std::string dataName;
+			if (dataName == "GameBoard")
+			{
+				Handler::execute("Print GameBoard", [&] {board.print(PRINT_BOARD); });
+			}
+			else if (dataName == "GameState")
+			{
+				Handler::execute("Print Gamestate", [&] {board.print(PRINT_STATE); });
+			}
+			else if (dataName == "GameAnswer")
+			{
+				Handler::execute("Print GameAnswer", [&] {board.print(PRINT_ANSWER); });
+			}
+			else if (dataName == "BombCount")
+			{
+				Handler::execute("Print BombCount", [&] {board.print(PRINT_BOMB_COUNT); });
+			}
+			else if (dataName == "FlagCount")
+			{
+				Handler::execute("Print FlagCount", [&] {board.print(PRINT_FLAG_COUNT); });
+			}
+			else if (dataName == "OpenBlankCount")
+			{
+				Handler::execute("Print OpenBlankCount", [&] {board.print(PRINT_OPEN_BLANK); });
+			}
+			else if (dataName == "RemainBlankCount")
+			{
+				Handler::execute("Print RemainBlankCount", [&] {board.print(PRINT_REMAIN_BLANK); });
+			}
+		}
+		if (status == 0) {
+			bool loadReady = false;
+			if (input == "Load")
+			{
+				std::string boardset;
+				std::cin >> boardset;
+				if (boardset == "RandomCount")
+				{
+					int m, n, count;
+					std::cin >> m >> n >> count;
+					board = Board(m, n, count);
+					loadReady = true;
+				}
+				else if (boardset == "RandomRate")
+				{
+					int m, n;
+					double rate;
+					std::cin >> m >> n >> rate;
+					board = Board(m, n, rate);
+					loadReady = true;
+				}
+			}
+			else if (input == "StartGame")
+			{
+				if (loadReady)
+				{
+					board.startGame();
+				}
+			}
+		}
+		else if (status == 1)
+		{
+			if (input == "LeftClick")
+			{
+				int row, col;
+				std::cin >> row >> col;
+				board.leftClick(row, col);
+
+			}
+			else if (input == "RightClick")
+			{
+				int row, col;
+				std::cin >> row >> col;
+				board.rightClick(row, col);
+			}
+		}
+		else if (status == 2)
+		{
+			if (input == "Replay")
+			{
+				status = 0;
+				board = Board();
+			}
+			else if (input == "Quit")
+			{
+				break;
+			}
+		}
+	}
+	//
+	return 0;
+}
