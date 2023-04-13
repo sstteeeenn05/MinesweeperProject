@@ -125,7 +125,7 @@ Board::Board(const char* path) {
     if (inputFile.fail()) throw std::exception("File does not exist");
     inputFile >> boardArgs.row >> boardArgs.column;
     inputFile.get();
-    if (boardArgs.row <= 0 && boardArgs.column <= 0) {
+    if (boardArgs.row <= 0 || boardArgs.column <= 0) {
         inputFile.close();
         throw std::exception("Row or column out of range.");
     }
@@ -141,7 +141,7 @@ Board::Board(int inputRow, int inputColumn, double randomRate) {
     boardArgs.randomRate = randomRate;
     boardArgs.row = inputRow;
     boardArgs.column = inputColumn;
-    if (boardArgs.row <= 0 && boardArgs.column <= 0) throw std::exception("Row or column out of range.");
+    if (boardArgs.row <= 0 || boardArgs.column <= 0) throw std::exception("Row or column out of range.");
     if (randomRate < 0) throw std::exception("Random rate out of range.");
 
     initializeBoards();
@@ -153,7 +153,7 @@ Board::Board(int inputRow, int inputColumn, int mineCount) {
     boardArgs.mode = MODE_INPUT_COUNT;
     boardArgs.row = inputRow;
     boardArgs.column = inputColumn;
-    if (boardArgs.row <= 0 && boardArgs.column <= 0) throw std::exception("Row or column out of range.");
+    if (boardArgs.row <= 0 || boardArgs.column <= 0) throw std::exception("Row or column out of range.");
     if (mineCount > boardArgs.row * boardArgs.column) throw std::exception("Mine count out of range.");
     boardArgs.bombCount = mineCount;
 
@@ -177,6 +177,11 @@ Board::Board(int inputRow, int inputColumn, int mineCount) {
     countBlank();
 }
 
+void Board::startGame() {
+	if (boardArgs.row <= 0 || boardArgs.column <= 0) throw std::exception("not load yet");
+	boardArgs.state = STATE_PLAYING;
+}
+
 void Board::maskBoard() {
     boardArgs.status = BOARD_STATUS_CONTINUE;
     std::for_each(boardArgs.board.begin(), boardArgs.board.end(), [&](std::vector<char>& i) {
@@ -187,6 +192,8 @@ void Board::maskBoard() {
 void Board::leftClick(int x, int y) {
     if (!isCoordinateValid(x, y)) throw std::exception("X or Y out of range.");
 
+	if (boardArgs.state != STATE_PLAYING) throw std::exception("haven't start");
+
     if (boardArgs.board[y][x] == MINE_FLAG) throw std::exception("Left click on flag.");
 
     if (boardArgs.board[y][x] != MINE_MASK && boardArgs.board[y][x] != MINE_SUS)
@@ -194,6 +201,7 @@ void Board::leftClick(int x, int y) {
 
     if (boardArgs.answer[y][x] == MINE_MINE) {
         showMine();
+		boardArgs.state = STATE_GAME_OVER;
         boardArgs.status = BOARD_STATUS_LOSE;
         return;
     }
@@ -201,11 +209,17 @@ void Board::leftClick(int x, int y) {
     revealGrid(x, y);
 
     countBlank();
-    if (boardArgs.remainBlankCount == 0)boardArgs.status = BOARD_STATUS_WIN;
+	if (boardArgs.remainBlankCount == 0) {
+		boardArgs.state = STATE_GAME_OVER;
+		boardArgs.status = BOARD_STATUS_WIN;
+	}
 }
 
 void Board::rightClick(int x, int y) {
     if (!isCoordinateValid(x, y)) throw std::exception("X or Y out of range.");
+
+	if (boardArgs.state != STATE_PLAYING) throw std::exception("haven't start");
+
     if (boardArgs.board[y][x] != MINE_MASK && boardArgs.board[y][x] != MINE_SUS && boardArgs.board[y][x] != MINE_FLAG)
         throw std::exception("Right click on clicked grid.");
 

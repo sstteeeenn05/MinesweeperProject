@@ -115,5 +115,6 @@ struct BoardArgs {
     int remainBlankCount = 0;
 	int status = BOARD_STATUS_CONTINUE;
 	int mode = MODE_READ_BOARD;
+	int state = STATE_STANDBY;
 	std::string path = "board.txt";
 };

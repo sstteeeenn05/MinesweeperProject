@@ -33,6 +33,8 @@ public:
 
     Board(int inputRow, int inputColumn, int mineCount);
 
+	void startGame();
+
     void maskBoard();
 
     void leftClick(int x, int y);
