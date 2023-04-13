@@ -57,7 +57,8 @@ enum {
 	PRINT_BOMB_COUNT,
 	PRINT_FLAG_COUNT,
 	PRINT_OPEN_BLANK,
-	PRINT_REMAIN_BLANK
+	PRINT_REMAIN_BLANK,
+	PRINT_STATE
 };
 
 enum {
@@ -115,5 +116,6 @@ struct BoardArgs {
     int remainBlankCount = 0;
 	int status = BOARD_STATUS_CONTINUE;
 	int mode = MODE_READ_BOARD;
+	int state = STATE_STANDBY;
 	std::string path = "board.txt";
 };
