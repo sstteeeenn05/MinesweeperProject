@@ -57,7 +57,7 @@ void BoardWindow::initMine(){
 			mineArgs->button->callback([](Fl_Widget* w, void* args) {
 				auto mineArgs = (MineArgs*)args;
 				BoardWindow::btnCallbackLock.lock();
-				std::string title = (std::stringstream(" ") << mineArgs->x << " " << mineArgs->x).str();
+				std::string title = (std::stringstream(" ") << mineArgs->x << " " << mineArgs->y).str();
 				if (Fl::event_button() == FL_LEFT_MOUSE)
 					Handler::execute("Leftclick" + title, [&] { mineArgs->board->leftClick(mineArgs->x, mineArgs->y); });
 				if (Fl::event_button() == FL_RIGHT_MOUSE)
@@ -234,7 +234,7 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 	if (oldBoardArgs.mode == MODE_INPUT_RATE) title << "Load RandomRate " << oldBoardArgs.column << " " << oldBoardArgs.row << " " << oldBoardArgs.randomRate;
 	if (oldBoardArgs.mode == MODE_INPUT_COUNT) title << "Load RandomCount " << oldBoardArgs.column << " " << oldBoardArgs.row << " " << oldBoardArgs.bombCount;
 
-	if (!Handler::execute(title.str().c_str(), [&] {
+	if (!Handler::execute(title.str(), [&] {
 		switch (oldBoardArgs.mode) {
 			case MODE_READ_BOARD:
 				newBoard->load(path);

@@ -93,7 +93,6 @@ int openCommandInput() {
 
 int openGUI() {
 	Handler::init(METHOD_GUI);
-	HomeWindow hw;
-	hw.open();
+	HomeWindow::open();
 	return Fl::run();
 }

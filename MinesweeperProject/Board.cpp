@@ -200,7 +200,7 @@ void Board::leftClick(int x, int y) {
 
 	if (boardArgs.state != STATE_PLAYING) throw std::exception("haven't start");
 
-    if (boardArgs.board[y][x] == MINE_FLAG) throw std::exception("Left click on flag.");
+    if (boardArgs.board[y][x] == MINE_FLAG) throw std::exception("");
 
     if (boardArgs.board[y][x] != MINE_MASK && boardArgs.board[y][x] != MINE_SUS)
         throw std::exception("Left click on clicked grid.");

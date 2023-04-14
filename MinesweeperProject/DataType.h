@@ -75,7 +75,6 @@ struct Widget {
 };
 
 struct ModeArgs {
-	std::vector<Fl_Radio_Round_Button*> buttons;
 	Fl_Choice* mode;
 	int selection = 0;
 	Fl_File_Chooser* chooser;
@@ -98,6 +97,7 @@ struct MineArgs {
 struct GameArgs {
 	BoardWindow* window;
 	ModeArgs* modeArgs;
+	bool enableDevMode = false;
 };
 
 struct RankArgs {

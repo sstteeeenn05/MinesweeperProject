@@ -1,29 +1,33 @@
 #include "HomeWindow.h"
 
-HomeWindow::HomeWindow() {
+using namespace HomeWindow;
+
+Fl_Window* HomeWindow::mainWindow = new Fl_Window(WINDOW_WIDTH, WINDOW_HEIGHT, "Minesweeper");
+Fl_Window* HomeWindow::devWindow = new Fl_Window(300, 100, "Dev Toolkit");
+Fl_Button* HomeWindow::logo;
+GameArgs* HomeWindow::gameArgs = new GameArgs();
+RankArgs* HomeWindow::rankArgs = new RankArgs();
+ModeArgs* HomeWindow::modeArgs = new ModeArgs();
+std::vector<Widget> HomeWindow::modeList;
+std::vector<Widget> HomeWindow::buttonList;
+
+void HomeWindow::open() {
 	initVariables();
 
 	mainWindow->begin();
 	initLogo();
 	createModeList();
+	createDevButton();
 	createBoardChooser();
 	createInput();
 	createButton();
 	initDefaultChoice();
 	mainWindow->end();
-	mainWindow->callback(HomeWindow::close, this);
+	mainWindow->callback(HomeWindow::close);
 
 	devWindow->begin();
-	
+
 	devWindow->end();
-}
-
-HomeWindow::~HomeWindow() {
-	delete devWindow;
-	delete logo;
-}
-
-void HomeWindow::open() {
 	mainWindow->show();
 }
 
@@ -45,9 +49,9 @@ void HomeWindow::initVariables() {
 	};
 
 	buttonList = {
-		{"New Game", &HomeWindow::startGame, gameArgs},
-		{"Leaderboard", &HomeWindow::openRank, rankArgs},
-		{"Exit", &HomeWindow::close, this}
+		{"New Game", &HomeWindow::startGame},
+		{"Leaderboard", &HomeWindow::openRank},
+		{"Exit", &HomeWindow::close}
 	};
 }
 
@@ -55,21 +59,28 @@ void HomeWindow::createModeList() {
 	modeArgs->mode = new Fl_Choice(LABEL_WIDTH, COMPONENT_Y[0], MENU_MODE_WIDTH, COMPONENT_HEIGHT, "Mode:");
 	for (auto &item : modeList) modeArgs->mode->add(item.text, "", item.callback, modeArgs);
 	mainWindow->add(modeArgs->mode);
+}
 
+void HomeWindow::createDevButton() {
 	auto devButton = new Fl_Light_Button(LABEL_WIDTH + MENU_MODE_WIDTH + MARGIN, COMPONENT_Y[0], 130, COMPONENT_HEIGHT, " Developer Mode");
 	devButton->callback([](Fl_Widget* w, void* args) {
 		auto devButton = (Fl_Light_Button*)w;
-		auto devWindow = (Fl_Window*)args;
-		if (devButton->value()) {
-			Handler::enableOutput();
-			devButton->parent()->show();
-			devWindow->show();
-		} else {
-			Handler::disableOutput();
-			devWindow->hide();
-		}
-	},devWindow);
+		devButton->value() ? openDevWindow() : closeDevWindow();
+	});
 	mainWindow->add(devButton);
+}
+
+void HomeWindow::openDevWindow() {
+	gameArgs->enableDevMode = true;
+	Handler::enableOutput();
+	mainWindow->show();
+	devWindow->show();
+}
+
+void HomeWindow::closeDevWindow() {
+	gameArgs->enableDevMode = false;
+	Handler::disableOutput();
+	devWindow->hide();
 }
 
 void HomeWindow::createBoardChooser() {
@@ -84,16 +95,14 @@ void HomeWindow::createBoardChooser() {
 	chooser->callback([](Fl_File_Chooser* c, void* args) {
 		std::string path = c->value();
 		if (path.substr(path.find_last_of(".") + 1) == "txt" && !c->shown()) {
-			auto modeArgs = (ModeArgs*)args;
 			modeArgs->boardPath = path;
 			modeArgs->iptPath->value(path.c_str());
 		}
-	}, modeArgs);
+	});
 
 	btnChooser->callback([](Fl_Widget* w, void* args) {
-		auto modeArgs = (ModeArgs*)args;
 		modeArgs->chooser->show();
-	}, modeArgs);
+	});
 
 	mainWindow->add(iptPath);
 	mainWindow->add(btnChooser);
@@ -122,14 +131,12 @@ void HomeWindow::createInput() {
 
 	iptNumber->callback([](Fl_Widget* w, void* args) {
 		auto input = (Fl_Spinner*)w;
-		auto modeArgs = (ModeArgs*)args;
 		modeArgs->number = min(input->value(), input->maximum());
 		input->value(modeArgs->number);
 	}, modeArgs);
 
 	auto iptSizeCallback = [](Fl_Widget* w, void* args) {
 		auto input = (Fl_Spinner*)w;
-		auto modeArgs = (ModeArgs*)args;
 
 		modeArgs->col = modeArgs->iptColumn->value();
 		modeArgs->row = modeArgs->iptRow->value();
@@ -140,7 +147,6 @@ void HomeWindow::createInput() {
 	iptRow->callback(iptSizeCallback, modeArgs);
 
 	btnRandom->callback([](Fl_Widget* w, void* args) {
-		auto modeArgs = (ModeArgs*)args;
 		if (!modeArgs->iptNumber || !modeArgs->iptColumn || !modeArgs->iptRow) return;
 
 		if (modeArgs->selection==MODE_INPUT_COUNT)
@@ -167,7 +173,7 @@ void HomeWindow::createButton() {
 }
 
 void HomeWindow::initDefaultChoice(){
-	modeArgs->mode->value(0);
+	modeArgs->mode->value(1);
 	selectMode(NULL, modeArgs);
 }
 
@@ -201,8 +207,6 @@ void HomeWindow::selectMode(Fl_Widget* w, void* args) {
 }
 
 void HomeWindow::startGame(Fl_Widget* w, void* args) {
-	auto gameArgs = (GameArgs*)args;
-	auto modeArgs = gameArgs->modeArgs;
 	modeArgs->iptNumber->do_callback();
 
 	std::ostringstream title("");
@@ -214,7 +218,7 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 	auto bw = gameArgs->window;
 	auto board = bw->board;
 
-	if (!Handler::execute(title.str().c_str(), [&] {
+	if (!Handler::execute(title.str(), [&] {
 		switch (modeArgs->selection) {
 			case MODE_READ_BOARD: {
 				if (!modeArgs->boardPath.length()) throw std::exception("Please select a board file or try another mode");
@@ -234,12 +238,10 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 	bw->reload(-1, -1);
 	bw->mainWindow->show();
 
-	gameArgs = new GameArgs();
-	modeArgs = new ModeArgs();
-	gameArgs->modeArgs = modeArgs;
-
+	if (gameArgs->enableDevMode) mainWindow->hide();
 	while (BoardWindow::isWindowAvailable(bw)) Fl::wait();
 	fl_alert("Game Stopped");
+	if (gameArgs->enableDevMode) mainWindow->show();
 }
 
 void HomeWindow::openRank(Fl_Widget* w, void* args) {
@@ -248,8 +250,7 @@ void HomeWindow::openRank(Fl_Widget* w, void* args) {
 }
 
 void HomeWindow::close(Fl_Widget* w, void* args) {
-	auto hw = (HomeWindow*)args;
 	BoardWindow::closeAll();
-	hw->devWindow->hide();
-	hw->mainWindow->hide();
+	HomeWindow::devWindow->hide();
+	HomeWindow::mainWindow->hide();
 }

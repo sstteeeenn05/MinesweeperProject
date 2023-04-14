@@ -49,7 +49,7 @@ bool Handler::execute(const std::string commandName, std::function<void()> funct
 	try {
 		function();
 	} catch (std::exception e) {
-		if (method == METHOD_GUI) fl_alert(e.what());
+		if (method == METHOD_GUI && strlen(e.what()) ) fl_alert(e.what());
 		status = false;
 	}
 	if(outputEnable) output(status, commandName);

@@ -24,7 +24,7 @@
 #include "FL/Fl_Spinner.H"
 #include "FL/Fl_Window.h"
 
-class HomeWindow{
+namespace HomeWindow{
 	const int WINDOW_WIDTH = 400;
 	const int WINDOW_HEIGHT = 350;
 	const int LOGO_Y = 10;
@@ -43,17 +43,15 @@ class HomeWindow{
 	const int BUTTON_WIDTH = 120;
 	const int BUTTON_HEIGHT = 40;
 	const int MARGIN = 10;
-public:
-	Fl_Window* mainWindow = new Fl_Window(WINDOW_WIDTH, WINDOW_HEIGHT, "Minesweeper");
-	Fl_Window* devWindow = new Fl_Window(300,100,"Dev Toolkit");
-	Fl_Button* logo;
-	GameArgs* gameArgs = new GameArgs();
-	RankArgs* rankArgs = new RankArgs();
-	ModeArgs* modeArgs = new ModeArgs();
-	std::vector<Widget> modeList;
-	std::vector<Widget> buttonList;
-	HomeWindow();
-	~HomeWindow();
+
+	extern Fl_Window* mainWindow;
+	extern Fl_Window* devWindow;
+	extern Fl_Button* logo;
+	extern GameArgs* gameArgs;
+	extern RankArgs* rankArgs;
+	extern ModeArgs* modeArgs;
+	extern std::vector<Widget> modeList;
+	extern std::vector<Widget> buttonList;
 
 	void open();
 
@@ -66,9 +64,11 @@ public:
 	void initDefaultChoice();
 
 	void createDevButton();
+	void openDevWindow();
+	void closeDevWindow();
 
-	static void selectMode(Fl_Widget*, void*);
-	static void startGame(Fl_Widget*, void*);
-	static void openRank(Fl_Widget*, void*);
-	static void close(Fl_Widget*, void*);
+	void selectMode(Fl_Widget*, void*);
+	void startGame(Fl_Widget*, void*);
+	void openRank(Fl_Widget*, void*);
+	void close(Fl_Widget*, void*);
 };
