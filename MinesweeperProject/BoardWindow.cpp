@@ -56,15 +56,14 @@ void BoardWindow::initMine(){
 			mineArgs->button = new Fl_Button(MARGIN + BTN_MINE_SIZE * j, MARGIN + BTN_MINE_SIZE * i, BTN_MINE_SIZE, BTN_MINE_SIZE);
 			mineArgs->button->callback([](Fl_Widget* w, void* args) {
 				auto mineArgs = (MineArgs*)args;
-				if (mineArgs->parent->boardArgs.status == BOARD_STATUS_CONTINUE) {
-					BoardWindow::btnCallbackLock.lock();
-					if (Fl::event_button() == FL_LEFT_MOUSE && mineArgs->parent->boardArgs.board[mineArgs->y][mineArgs->x] != MINE_FLAG)
-						mineArgs->board->leftClick(mineArgs->x, mineArgs->y);
-					if (Fl::event_button() == FL_RIGHT_MOUSE)
-						mineArgs->board->rightClick(mineArgs->x, mineArgs->y);
-					mineArgs->parent->update();
-					BoardWindow::btnCallbackLock.unlock();
-				}
+				BoardWindow::btnCallbackLock.lock();
+				std::string title = (std::stringstream(" ") << mineArgs->x << " " << mineArgs->x).str();
+				if (Fl::event_button() == FL_LEFT_MOUSE)
+					Handler::execute("Leftclick" + title, [&] { mineArgs->board->leftClick(mineArgs->x, mineArgs->y); });
+				if (Fl::event_button() == FL_RIGHT_MOUSE)
+					Handler::execute("Rightclick" + title, [&] { mineArgs->board->rightClick(mineArgs->x, mineArgs->y); });
+				mineArgs->parent->update();
+				BoardWindow::btnCallbackLock.unlock();
 			}, (void*)mineArgs);
 			mineArgs->board = board;
 			mineArgs->x = j;
@@ -248,10 +247,7 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 				break;
 			default: throw std::exception("Logic error");
 		}
-	})) {
-		delete newBoardWindow;
-		return;
-	}
+	})) return delete newBoardWindow;
 
 	newBoard->startGame();
 	newBoardWindow->reload(oldBoardWindow->mainWindow->x(), oldBoardWindow->mainWindow->y());

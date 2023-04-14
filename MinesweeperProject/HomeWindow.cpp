@@ -228,10 +228,7 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 				break;
 			} default: throw std::exception("Logic error");
 		}
-	})) {
-		delete bw;
-		return;
-	}
+	})) return delete bw;
 
 	board->startGame();
 	bw->reload(-1, -1);
