@@ -1,5 +1,6 @@
 #include "BoardWindow.h"
 
+bool BoardWindow::enableDevMode = false;
 std::unordered_set<BoardWindow*> BoardWindow::objAddrList;
 std::mutex BoardWindow::btnCallbackLock;
 
@@ -35,14 +36,15 @@ void BoardWindow::reload(int x, int y) {
 	mainWindow->begin();
 	initMine();
 	mainWindow->end();
-	mainWindow->callback([](Fl_Widget* w, void* args) { delete (BoardWindow*)args; }, (void*)this);
+	if (enableDevMode) mainWindow->callback((Fl_Callback*)nullptr);
+	else mainWindow->callback([](Fl_Widget* w, void* args) { delete (BoardWindow*)args; }, (void*)this);
 
-	initWindowTItle();
+	initWindowTitle();
 	initResultWindow();
 	objAddrList.insert(this);
 }
 
-void BoardWindow::initWindowTItle() {
+void BoardWindow::initWindowTitle() {
 	std::ostringstream title("");
 	title << "Game (" << boardArgs.column << "x" << boardArgs.row << ") 0.0%" << std::endl;
 	mainWindow->label(title.str().c_str());
@@ -137,6 +139,7 @@ void BoardWindow::update() {
 }
 
 void BoardWindow::win() {
+	Handler::execute("", [] {hout << "You win the game"; });
 	for (int i = 0; i < boardArgs.row; i++) {
 		for (int j = 0; j < boardArgs.column; j++) {
 			clock_t start = clock();
@@ -156,6 +159,7 @@ void BoardWindow::win() {
 }
 
 void BoardWindow::lose() {
+	Handler::execute("", [] {hout << "You lose the game"; });
 	for (int i = 0; i < boardArgs.row; i++) {
 		for (int j = 0; j < boardArgs.column; j++) {
 			clock_t start = clock();
@@ -177,34 +181,38 @@ void BoardWindow::initResultWindow() {
 	resultWindow->begin();
 
 	initResultVariables();
-	initResultButtonArgs();
+	createResultButton();
 
 	resultWindow->end();
 	resultWindow->callback([](Fl_Widget* w, void* args) { delete (BoardWindow*)args; }, (void*)this);
 }
 
 void BoardWindow::initResultVariables() {
-	resultButtonList = {
-		{"Play Again", &BoardWindow::playAgain, (void*)this},
-		{"Regenerate", &BoardWindow::newGame, (void*)this},
-		{"Submit Score", &BoardWindow::submitScore, (void*)this},
-		{"Exit",[](Fl_Widget* w,void* args) { delete (BoardWindow*)args; },(void*)this}
+	if(enableDevMode) resultButtonList = {
+		{"Replay", {0, [](Fl_Widget* w,void* args) { delete (BoardWindow*)args; },(void*)this}},
+		{"Quit",{1, &HomeWindow::close}}
 	};
+	else resultButtonList = {
+		{"Play Again", {0, &BoardWindow::playAgain, (void*)this}},
+		{"Regenerate", {1, &BoardWindow::newGame, (void*)this}},
+		{"Submit Score", {2, &BoardWindow::submitScore, (void*)this}},
+		{"Exit",{3, [](Fl_Widget* w,void* args) { delete (BoardWindow*)args; },(void*)this}}
+	};
+	resultWindow->resize(resultWindow->x(), resultWindow->y(), MARGIN + (RESULT_BUTTON_WIDTH + MARGIN) * resultButtonList.size(), RESULT_WINDOW_HEIGHT);
 }
 
-void BoardWindow::initResultButtonArgs() {
-	int buttonIndex = 0;
+void BoardWindow::createResultButton() {
 	for (auto& button : resultButtonList) {
-		auto component = new Fl_Button(MARGIN + (MARGIN + RESULT_BUTTON_WIDTH) * (buttonIndex++), MARGIN, RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT, button.text);
-		button.component = component;
-		button.component->callback(button.callback, button.args);
+		auto component = new Fl_Button(MARGIN + (MARGIN + RESULT_BUTTON_WIDTH) * button.second.index, MARGIN, RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT, button.first);
+		button.second.component = component;
+		button.second.component->callback(button.second.callback, button.second.args);
 	}
 }
 
 void BoardWindow::playAgain(Fl_Widget* w, void* args) {
 	auto bw = (BoardWindow*)args;
 	bw->board->maskBoard();
-	bw->initWindowTItle();
+	bw->initWindowTitle();
 	bw->update();
 	bw->mainWindow->redraw();
 	bw->resultWindow->hide();

@@ -8,12 +8,12 @@ std::ofstream Handler::outputFile;
 
 void Handler::output(bool isSuccess, const std::string& commandName) {
 	std::ostream& outputStream = (method == METHOD_CMD_FILE ? outputFile : std::cout);
-	outputStream << "<" << commandName << "> : ";
+	if(commandName.length()) outputStream << "<" << commandName << "> : ";
 	if (!isSuccess) {
 		outputStream << "Failed" << std::endl;
 		return;
 	}
-	if (pipe.eof()) {
+	if (isPipeEmpty()) {
 		outputStream << "Success" << std::endl;
 		return;
 	}
@@ -21,10 +21,16 @@ void Handler::output(bool isSuccess, const std::string& commandName) {
 	while(getline(pipe,buffer)) outputStream << buffer << std::endl;
 }
 
+bool Handler::isPipeEmpty() {
+	pipe.seekg(0, std::ios::end);
+	bool isEmpty = pipe.tellg() == 0;
+	pipe.seekg(0, std::ios::beg);
+	return isEmpty;
+}
+
 void Handler::resetPipe() {
 	pipe.str(std::string());
 	pipe.clear();
-	pipe.get();
 }
 
 void Handler::init(int m, std::string path) {

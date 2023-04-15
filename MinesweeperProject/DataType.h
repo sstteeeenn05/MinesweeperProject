@@ -68,7 +68,7 @@ enum {
 };
 
 struct Widget {
-	const char* text;
+	int index;
 	Fl_Callback* callback;
 	void* args;
 	Fl_Widget* component;
@@ -97,7 +97,6 @@ struct MineArgs {
 struct GameArgs {
 	BoardWindow* window;
 	ModeArgs* modeArgs;
-	bool enableDevMode = false;
 };
 
 struct RankArgs {

@@ -6,7 +6,9 @@
 #include <exception>
 #include <fstream>
 #include <functional>
+#include <map>
 #include <vector>
+#include <utility>
 
 #include "Board.h"
 #include "BoardWindow.h"
@@ -46,12 +48,13 @@ namespace HomeWindow{
 
 	extern Fl_Window* mainWindow;
 	extern Fl_Window* devWindow;
+	extern Fl_Button* devButton;
 	extern Fl_Button* logo;
 	extern GameArgs* gameArgs;
 	extern RankArgs* rankArgs;
 	extern ModeArgs* modeArgs;
-	extern std::vector<Widget> modeList;
-	extern std::vector<Widget> buttonList;
+	extern std::vector<std::pair<const char*, Widget>> modeList;
+	extern std::map<const char*, Widget> buttonList;
 
 	void open();
 
@@ -68,6 +71,7 @@ namespace HomeWindow{
 	void closeDevWindow();
 
 	void selectMode(Fl_Widget*, void*);
+	void loadGame(Fl_Widget*, void*);
 	void startGame(Fl_Widget*, void*);
 	void openRank(Fl_Widget*, void*);
 	void close(Fl_Widget*, void*);

@@ -16,6 +16,7 @@ class Handler{
 	static int method;
 	static bool outputEnable;
 	static void output(bool, const std::string&);
+	static bool isPipeEmpty();
 	static void resetPipe();
 public:
 	static std::stringstream pipe;

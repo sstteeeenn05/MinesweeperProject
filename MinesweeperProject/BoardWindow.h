@@ -10,6 +10,7 @@
 #include <unordered_set>
 
 #include "Board.h"
+#include "HomeWindow.h"
 
 #include "FL/Fl.h"
 #include "FL/Fl_PNG_Image.h"
@@ -26,6 +27,7 @@ class BoardWindow{
 	const int RESULT_WINDOW_WIDTH = MARGIN + (RESULT_BUTTON_WIDTH + MARGIN) * RESULT_BUTTON_COUNT;
 	const int RESULT_WINDOW_HEIGHT = RESULT_BUTTON_HEIGHT + MARGIN * 2;
 public:
+	static bool enableDevMode;
 	static std::mutex btnCallbackLock;
 	static bool isWindowAvailable(BoardWindow*);
 	static int getWindowCount();
@@ -39,10 +41,10 @@ public:
 
 	Board* board = new Board();
 	const BoardArgs& boardArgs = board->getBoardArgs();
-	std::vector<std::vector<MineArgs*> > mineList;
+	std::vector<std::vector<MineArgs*>> mineList;
 	Fl_Window* mainWindow = new Fl_Window(MARGIN * 2 + BTN_MINE_SIZE * boardArgs.column, MARGIN * 2 + BTN_MINE_SIZE * boardArgs.row);
 	Fl_Window* resultWindow = new Fl_Window(RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT);
-	std::vector<Widget> resultButtonList;
+	std::map<const char*, Widget> resultButtonList;
 
 	BoardWindow() = default;
 	BoardWindow(Board*);
@@ -52,14 +54,14 @@ public:
 
 	void initMine();
 	void removeMine();
-	void initWindowTItle();
+	void initWindowTitle();
 	void update();
 	void win();
 	void lose();
 
 	void initResultWindow();
 	void initResultVariables();
-	void initResultButtonArgs();
+	void createResultButton();
 	void openResultWindow();
 
 	static void playAgain(Fl_Widget*, void*);
