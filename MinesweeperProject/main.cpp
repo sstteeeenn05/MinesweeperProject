@@ -17,7 +17,10 @@ int main(int argc, char* argv[]) {
 			}
 			openCommandFile(argv[2], argv[3]);
 		} else if (command == "commandinput") {
-			openCommandInput();
+			Board a;
+			a.load(10, 10, 10);
+			a.submitScore("ASOIR",263.00);
+			//openCommandInput();
 		} else if (command == "gui") {
 			std::cout << "FLTK exit with code : " << openGUI() << std::endl;
 		} else if (command == "help") {

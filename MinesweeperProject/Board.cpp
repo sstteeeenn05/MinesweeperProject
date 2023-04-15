@@ -4,6 +4,7 @@
 #include <exception>
 #include <queue>
 #include <fstream>
+#include <ctime>
 
 void Board::initializeBoards() {
     boardArgs.board = std::vector<std::vector<char>>
@@ -181,8 +182,35 @@ void Board::load(int inputRow, int inputColumn, int mineCount) {
     countBlank();
 }
 
+void Board::submitScore(const std::string& username, const double time) const {
+    system("if not exist submit mkdir submit");
+    std::ofstream leaderBoard("submit/leaderBoard.txt",std::ofstream::app);
+    
+    const std::string timeStr = std::to_string(std::time(nullptr)); 
+    const std::string boardFilePath = "submit/" + timeStr + ".txt";
+    
+    std::ofstream boardFile(boardFilePath, std::ofstream::openmode());
+    
+    leaderBoard << timeStr << " " << username << " "<< time << " " 
+                << boardArgs.row << " " << boardArgs.column << " " << boardArgs.bombCount << std::endl;
+    
+    boardFile<< boardArgs.row << " " << boardArgs.column << std::endl;
+    
+    for (const std::vector<char>& items : boardArgs.answer) {
+        for (const char& item : items) {
+            if(item == MINE_MINE) boardFile << 'X';
+            else boardFile<<'O';
+        }
+        boardFile << std::endl;
+    }
+
+    leaderBoard.close();
+    boardFile.close();
+}
+
+
 void Board::startGame() {
-	if (boardArgs.row <= 0 || boardArgs.column <= 0) throw std::exception("not load yet");
+	if (boardArgs.row <= 0 || boardArgs.column <= 0) throw std::exception("Board is not load yet.");
 	if (boardArgs.state != STATE_STANDBY) throw std::exception("wrong state");
 	boardArgs.state = STATE_PLAYING;
 }

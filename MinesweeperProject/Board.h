@@ -2,6 +2,7 @@
 
 #include "DataType.h"
 #include "Handler.h"
+#include <string>
 
 class Board {
 private:
@@ -32,6 +33,8 @@ public:
     void load(int inputRow, int inputColumn, double randomRate);
 
     void load(int inputRow, int inputColumn, int mineCount);
+
+    void submitScore(const std::string& username, const double time) const;
 
 	void startGame();
 
