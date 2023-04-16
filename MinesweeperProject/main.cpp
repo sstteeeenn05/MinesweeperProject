@@ -2,9 +2,9 @@
 #include <cstring>
 #include <cstdio>
 #include <string>
-#include "command.cpp"
+#include "command.hpp"
 
-#define toLower(str) std::for_each(str.begin(), str.end(), [](auto& c) { c = tolower(c); });
+#define toLower(str) std::for_each((str).begin(), (str).end(), [](auto& c) { c = tolower(c); });
 
 int main(int argc, char* argv[]) {
 	std::string command = (argc > 1) ? argv[1] : "help";
@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
 		toLower(command);
 		if (command == "commandfile") {
 			if (argc < 3) {
-				puts("Lost argument, shout be: CommandFile <Input File> <Output File>");
+				puts("Lost argument, should be: CommandFile <Input File> <Output File>");
 				goto input;
 			}
 			openCommandFile(argv[2], argv[3]);

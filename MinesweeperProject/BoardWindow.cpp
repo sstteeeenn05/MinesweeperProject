@@ -223,7 +223,6 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 	auto oldBoardWindow = (BoardWindow*)args;
 	auto newBoardWindow = new BoardWindow();
 	auto &oldBoardArgs = oldBoardWindow->boardArgs;
-	auto& newBoardArgs = newBoardWindow->boardArgs;
 	auto newBoard = newBoardWindow->board;
 
 	std::ostringstream title("");
