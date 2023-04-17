@@ -45,6 +45,12 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 				file >> output;
 				if (PRINT_TABLE.find(output) == PRINT_TABLE.end()) //if the output is invalid
 				{
+					if (std::cin.peek() != '\n') //if it is a sentence
+					{
+						std::string trash;
+						std::getline(std::cin, trash);
+						output = output + " " + trash;
+					}
 					Handler::execute("Print " + output, [&] { throw std::exception(); }); //call lambda to cout "failed"
 				}
 				else //it is a valid output
@@ -83,6 +89,15 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 				int x, y;
 				file >> x >> y;
 				Handler::execute("LeftClick " + std::to_string(x) + " " + std::to_string(y), [&] {board.leftClick(x, y); });
+				const auto& boardArgs = board.getBoardArgs();
+				if (boardArgs.status == BOARD_STATUS_WIN) //if game win
+				{
+					Handler::execute("", [&] {hout<< "You win the game"; });
+				}
+				else if (boardArgs.status == BOARD_STATUS_LOSE) //if game lose
+				{
+					Handler::execute("", [&] {hout << "You lose the game"; });
+				}
 			}
 			else if (command == "RightClick")
 			{
@@ -108,35 +123,21 @@ int openCommandInput() {
 	{
 		if (input == "Print") //judge the command
 		{
-			std::string dataName;
-			std::cin >> dataName;
-			if (dataName == "GameBoard") //if print game board
+			std::string output;
+			std::cin >> output;
+			if (PRINT_TABLE.find(output) == PRINT_TABLE.end()) //if the output is invalid
 			{
-				Handler::execute("Print GameBoard", [&] {board.print(PRINT_BOARD); });
+				if (std::cin.peek() != '\n') //if it is a sentence
+				{
+					std::string trash;
+					std::getline(std::cin, trash);
+					output = output + " " + trash;
+				}
+				Handler::execute("Print " + output, [&] { throw std::exception(); }); //call lambda to cout "failed"
 			}
-			else if (dataName == "GameState") //if print game state
+			else //it is a valid output
 			{
-				Handler::execute("Print Gamestate", [&] {board.print(PRINT_STATE); });
-			}
-			else if (dataName == "GameAnswer") //if print game answer
-			{
-				Handler::execute("Print GameAnswer", [&] {board.print(PRINT_ANSWER); });
-			}
-			else if (dataName == "BombCount") //if print bomb count
-			{
-				Handler::execute("Print BombCount", [&] {board.print(PRINT_BOMB_COUNT); });
-			}
-			else if (dataName == "FlagCount") //if print flag count
-			{
-				Handler::execute("Print FlagCount", [&] {board.print(PRINT_FLAG_COUNT); });
-			}
-			else if (dataName == "OpenBlankCount") //if print open blank count
-			{
-				Handler::execute("Print OpenBlankCount", [&] {board.print(PRINT_OPEN_BLANK); });
-			}
-			else if (dataName == "RemainBlankCount") //if print remain blank count
-			{
-				Handler::execute("Print RemainBlankCount", [&] {board.print(PRINT_REMAIN_BLANK); });
+				Handler::execute("Print " + output, [&] { board.print(PRINT_TABLE.at(output)); }); //call lambda to cout 
 			}
 		}
 		else if (input == "Load") //judge the command
@@ -156,6 +157,17 @@ int openCommandInput() {
 				std::cin >> m >> n >> rate;
 				Handler::execute("RandomRate " + std::to_string(m) + " " + std::to_string(n) + " " + toStringWithPrecisionTwo(rate), [&] {board.load(m, n, rate); });
 			}
+			else
+			{
+				input = input + " " + boardset;
+				if (std::cin.peek() != '\n') //if it is a sentence
+				{
+					std::string trash;
+					std::getline(std::cin, trash);
+					input = input + " " + trash;
+				}
+				Handler::execute(input, [&] { throw std::exception(); });
+			}
 		}
 		else if (input == "StartGame") //judge the command
 		{
@@ -166,8 +178,15 @@ int openCommandInput() {
 			int row, col;
 			std::cin >> row >> col;
 			Handler::execute("LeftClick " + std::to_string(row) + " " + std::to_string(col), [&] {board.leftClick(row, col); });
-
-
+			const auto& boardArgs = board.getBoardArgs();
+			if (boardArgs.status ==BOARD_STATUS_WIN) //if game win
+			{
+				std::cout << "You win the game" << std::endl;
+			}
+			else if (boardArgs.status == BOARD_STATUS_LOSE) //if game lose
+			{
+				std::cout << "You lose the game" << std::endl;
+			}
 		}
 		else if (input == "RightClick") //judge the command
 		{
