@@ -44,11 +44,11 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 				file >> output;
 				if (PRINT_TABLE.find(output) == PRINT_TABLE.end()) //if the output is invalid
 				{
-					if (std::cin.peek() != '\n') //if it is a sentence
+					if (file.peek() != '\n') //if it is a sentence
 					{
 						std::string trash;
-						std::getline(std::cin, trash);
-						output = output + trash;
+						std::getline(file, trash);
+						output += trash;
 					}
 					Handler::execute("Print " + output, [&] { throw std::exception(); }); //call lambda to cout "failed"
 				}
@@ -85,10 +85,10 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 				else
 				{
 					command += " " + mode;
-					if (std::cin.peek() != '\n') //if it is a sentence
+					if (file.peek() != '\n') //if it is a sentence
 					{
 						std::string trash;
-						std::getline(std::cin, trash);
+						std::getline(file, trash);
 						command += trash;
 					}
 					Handler::execute(command, [&] { throw std::exception(); });
