@@ -7,6 +7,8 @@
 #include <ctime>
 
 void Board::initializeBoards() {
+    boardArgs.bombCount=0;
+    boardArgs.flagCount=0;
     boardArgs.board = std::vector<std::vector<char>>
         (boardArgs.row, std::vector<char>(boardArgs.column, MINE_MASK));
 

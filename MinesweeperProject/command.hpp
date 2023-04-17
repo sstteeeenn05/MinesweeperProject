@@ -1,6 +1,10 @@
+#pragma once
+
 #include <map>
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <iomanip>
 #include "Board.h"
 #include "Handler.h"
 #include "HomeWindow.h"
@@ -17,13 +21,21 @@ const std::map<std::string, int> PRINT_TABLE =
 	{"RemainBlankCount", PRINT_REMAIN_BLANK}
 };
 
+std::string toStringWithPrecisionTwo(double input) {
+	std::ostringstream out("");
+	out.precision(2);
+	out << std::fixed <<input;
+	return std::move(out).str();
+}
+
+// TODO: 1. win/lose 2. map 3. some if block's else block is not done. 
 int openCommandFile(std::string inputPath, std::string outputPath) {
 	Handler::init(METHOD_CMD_FILE, outputPath);
-	std::string command;
 	std::ifstream file;
 	file.open(inputPath, std::ios::in);
 	if (file.is_open()) //if the file can be opened successfully
 	{
+		std::string command;
 		Board board;
 		while (file >> command)
 		{
@@ -60,9 +72,9 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 				else if (mode == "RandomRate")
 				{
 					int m, n;
-					float bombRate;
+					double bombRate;
 					file >> m >> n >> bombRate;
-					Handler::execute("Load RandomCount " + std::to_string(m) + " " + std::to_string(n) + " " + std::to_string(bombRate),
+					Handler::execute("Load RandomCount " + std::to_string(m) + " " + toStringWithPrecisionTwo(n) + " " + std::to_string(bombRate),
 						[&] {board.load(m, n, bombRate); });
 				}
 			}
@@ -142,12 +154,12 @@ int openCommandInput() {
 				int m, n;
 				double rate;
 				std::cin >> m >> n >> rate;
-				Handler::execute("RandomRate " + std::to_string(m) + " " + std::to_string(n) + " " + std::to_string(rate), [&] {board.load(m, n, rate); });
+				Handler::execute("RandomRate " + std::to_string(m) + " " + std::to_string(n) + " " + toStringWithPrecisionTwo(rate), [&] {board.load(m, n, rate); });
 			}
 		}
 		else if (input == "StartGame") //judge the command
 		{
-			Handler::execute("StartGame ", [&] {board.startGame(); });
+			Handler::execute("StartGame", [&] {board.startGame(); });
 		}
 		else if (input == "LeftClick")
 		{
@@ -190,9 +202,9 @@ int openCommandInput() {
 		}
 		else
 		{
-			std::string trash;
-			if (std::cin.peek() != '\n') //if it is a sentance
+			if (std::cin.peek() != '\n') //if it is a sentence
 			{
+				std::string trash;
 				std::getline(std::cin, trash);
 				input = input + " " + trash;
 			}
