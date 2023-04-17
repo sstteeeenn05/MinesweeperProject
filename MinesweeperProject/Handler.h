@@ -21,7 +21,7 @@ class Handler{
 public:
 	static std::stringstream pipe;
 	static std::ofstream outputFile;
-	static void init(int, std::string = std::string());
+	static bool init(int, std::string = std::string());
 	static void enableOutput();
 	static void disableOutput();
 	static bool execute(const std::string, std::function<void()>);

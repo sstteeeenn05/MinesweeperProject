@@ -33,11 +33,15 @@ void Handler::resetPipe() {
 	pipe.clear();
 }
 
-void Handler::init(int m, std::string path) {
+bool Handler::init(int m, std::string path) {
 	method = m;
-	if(path.length()) outputFile.open(path);
+	if(path.length()) {
+		outputFile.open(path);
+		if(!outputFile.is_open()) return false;
+	}
 	method == METHOD_GUI ? disableOutput() : enableOutput();
 	resetPipe();
+	return true;
 }
 
 void Handler::enableOutput() {
