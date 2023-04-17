@@ -37,6 +37,12 @@ enum {
 };
 
 enum {
+	PLAY_MODE_NORMAL,
+	PLAY_MODE_DEV,
+	PLAY_MODE_REPLAY
+};
+
+enum {
 	BOARD_STATUS_CONTINUE,
 	BOARD_STATUS_LOSE,
 	BOARD_STATUS_WIN
@@ -51,13 +57,13 @@ enum {
 };
 
 enum {
+	PRINT_STATE,
 	PRINT_BOARD,
 	PRINT_ANSWER,
 	PRINT_BOMB_COUNT,
 	PRINT_FLAG_COUNT,
 	PRINT_OPEN_BLANK,
-	PRINT_REMAIN_BLANK,
-	PRINT_STATE
+	PRINT_REMAIN_BLANK
 };
 
 enum {
@@ -99,7 +105,11 @@ struct GameArgs {
 };
 
 struct RankArgs {
-	RankWindow* window;
+	int id;
+	std::string userName;
+	int time;
+	int row, col;
+	int bombCount;
 };
 
 struct BoardArgs {

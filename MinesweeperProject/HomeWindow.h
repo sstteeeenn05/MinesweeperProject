@@ -10,6 +10,9 @@
 #include <vector>
 #include <utility>
 
+#include <Windows.h>
+#pragma comment(lib, "winmm.lib")
+
 #include "Board.h"
 #include "BoardWindow.h"
 #include "RankWindow.h"
@@ -23,7 +26,9 @@
 #include "FL/Fl_Menu_Item.H"
 #include "FL/Fl_PNG_Image.H"
 #include "FL/Fl_Radio_Round_Button.H"
+#include "FL/Fl_Slider.H"
 #include "FL/Fl_Spinner.H"
+#include "FL/Fl_Timer.H"
 #include "FL/Fl_Window.h"
 
 namespace HomeWindow{
@@ -47,32 +52,52 @@ namespace HomeWindow{
 	const int MARGIN = 10;
 
 	extern Fl_Window* mainWindow;
-	extern Fl_Window* devWindow;
 	extern Fl_Button* devButton;
 	extern Fl_Button* logo;
 	extern GameArgs* gameArgs;
-	extern RankArgs* rankArgs;
 	extern ModeArgs* modeArgs;
-	extern std::vector<std::pair<const char*, Widget>> modeList;
+	extern std::vector<std::pair<const char*, Widget>> modeListItem;
 	extern std::map<const char*, Widget> buttonList;
 
-	void open();
+	extern Fl_Window* devWindow;
+	extern Fl_Button* printButton;
+	extern Fl_Choice* printList;
+	extern std::vector<std::pair<const char*, Widget>> printListItem;
+	extern Fl_Slider* volumeSlider;
 
-	void initLogo();
+	extern Fl_Window* rankWindow;
+	extern std::vector<RankArgs*> leaderboardList;
+
+	extern int loadCounter;
+	extern bool easterEgg;
+	extern Fl_Timer* easterEggTimer;
+
+	void open();
 	void initVariables();
+
+	void initMainWindow();
+	void initLogo();
 	void createModeList();
+	void createDevButton();
+	void openDevWindow();
+	void closeDevWindow();
 	void createBoardChooser();
 	void createInput();
 	void createButton();
 	void initDefaultChoice();
 
-	void createDevButton();
-	void openDevWindow();
-	void closeDevWindow();
+	void initDevWindow();
+	void createPrintChoice();
+	void createVolumeSlider();
 
 	void selectMode(Fl_Widget*, void*);
 	void loadGame(Fl_Widget*, void*);
 	void startGame(Fl_Widget*, void*);
 	void openRank(Fl_Widget*, void*);
 	void close(Fl_Widget*, void*);
-};
+
+	void selectPrint(Fl_Widget*, void*);
+	void changeVolume(Fl_Widget*, void*);
+
+	void easterEggCallback(Fl_Widget*, void*);
+}

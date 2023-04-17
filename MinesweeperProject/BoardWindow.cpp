@@ -1,6 +1,6 @@
 #include "BoardWindow.h"
 
-bool BoardWindow::enableDevMode = false;
+int BoardWindow::playMode = PLAY_MODE_NORMAL;
 std::unordered_set<BoardWindow*> BoardWindow::objAddrList;
 std::mutex BoardWindow::btnCallbackLock;
 
@@ -10,6 +10,13 @@ int BoardWindow::getWindowCount() {
 
 bool BoardWindow::isWindowAvailable(BoardWindow* bw) {
 	return objAddrList.find(bw) != objAddrList.end();
+}
+
+void BoardWindow::easterAll(Fl_Color c) {
+	for (auto bw : objAddrList) {
+		bw->mainWindow->color(c);
+		for (auto& mines : bw->mineList) for (auto mine : mines) mine->button->color(c);
+	}
 }
 
 void BoardWindow::closeAll() {
@@ -22,6 +29,7 @@ BoardWindow::~BoardWindow() {
 	delete resultWindow;
 	board = nullptr;
 	objAddrList.erase(this);
+	PlaySound(NULL, NULL, SND_ASYNC);
 }
 
 void BoardWindow::reload(int x, int y) {
@@ -36,12 +44,16 @@ void BoardWindow::reload(int x, int y) {
 	mainWindow->begin();
 	initMine();
 	mainWindow->end();
-	if (enableDevMode) mainWindow->callback((Fl_Callback*)nullptr);
-	else mainWindow->callback([](Fl_Widget* w, void* args) { delete (BoardWindow*)args; }, (void*)this);
+	if (playMode == PLAY_MODE_DEV) mainWindow->callback((Fl_Callback*)nullptr);
+	else mainWindow->callback([](Fl_Widget* w, void* args) {
+		delete (BoardWindow*)args;
+		PlaySound(L"audio\\funkytown.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
+	}, (void*)this);
 
 	initWindowTitle();
 	initResultWindow();
 	objAddrList.insert(this);
+	PlaySound(L"audio\\amongus.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
 }
 
 void BoardWindow::initWindowTitle() {
@@ -139,6 +151,7 @@ void BoardWindow::update() {
 }
 
 void BoardWindow::win() {
+	PlaySound(L"audio\\win.wav", NULL, SND_ASYNC);
 	Handler::execute("", [] {hout << "You win the game"; });
 	for (int i = 0; i < boardArgs.row; i++) {
 		for (int j = 0; j < boardArgs.column; j++) {
@@ -159,6 +172,7 @@ void BoardWindow::win() {
 }
 
 void BoardWindow::lose() {
+	PlaySound(L"audio\\boom.wav", NULL, SND_FILENAME | SND_ASYNC);
 	Handler::execute("", [] {hout << "You lose the game"; });
 	for (int i = 0; i < boardArgs.row; i++) {
 		for (int j = 0; j < boardArgs.column; j++) {
@@ -188,15 +202,18 @@ void BoardWindow::initResultWindow() {
 }
 
 void BoardWindow::initResultVariables() {
-	if(enableDevMode) resultButtonList = {
-		{"Replay", {0, [](Fl_Widget* w,void* args) { delete (BoardWindow*)args; },(void*)this}},
-		{"Quit",{1, &HomeWindow::close}}
-	};
-	else resultButtonList = {
+	if (playMode == PLAY_MODE_NORMAL) resultButtonList = {
 		{"Play Again", {0, &BoardWindow::playAgain, (void*)this}},
 		{"Regenerate", {1, &BoardWindow::newGame, (void*)this}},
 		{"Submit Score", {2, &BoardWindow::submitScore, (void*)this}},
-		{"Exit",{3, [](Fl_Widget* w,void* args) { delete (BoardWindow*)args; },(void*)this}}
+		{"Exit",{3, [](Fl_Widget* w,void* args) {
+			delete (BoardWindow*)args;
+			PlaySound(L"audio\\funkytown.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
+		}, (void*)this}}
+	};
+	if(playMode == PLAY_MODE_DEV) resultButtonList = {
+		{"Replay", {0, [](Fl_Widget* w,void* args) { delete (BoardWindow*)args; },(void*)this}},
+		{"Quit",{1, &HomeWindow::close}}
 	};
 	resultWindow->resize(resultWindow->x(), resultWindow->y(), MARGIN + (RESULT_BUTTON_WIDTH + MARGIN) * resultButtonList.size(), RESULT_WINDOW_HEIGHT);
 }
@@ -217,6 +234,7 @@ void BoardWindow::playAgain(Fl_Widget* w, void* args) {
 	bw->mainWindow->redraw();
 	bw->resultWindow->hide();
 	bw->board->startGame();
+	PlaySound(L"audio\\amongus.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
 }
 
 void BoardWindow::newGame(Fl_Widget* w, void* args) {
@@ -256,10 +274,12 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 		}
 	})) return delete newBoardWindow;
 
-	newBoard->startGame();
-	newBoardWindow->reload(oldBoardWindow->mainWindow->x(), oldBoardWindow->mainWindow->y());
-	newBoardWindow->mainWindow->show();
+	int x = oldBoardWindow->mainWindow->x();
+	int y = oldBoardWindow->mainWindow->y();
 	delete oldBoardWindow;
+	newBoard->startGame();
+	newBoardWindow->mainWindow->show();
+	newBoardWindow->reload(x, y);
 }
 
 void BoardWindow::submitScore(Fl_Widget* w, void* args) {

@@ -27,10 +27,11 @@ class BoardWindow{
 	const int RESULT_WINDOW_WIDTH = MARGIN + (RESULT_BUTTON_WIDTH + MARGIN) * RESULT_BUTTON_COUNT;
 	const int RESULT_WINDOW_HEIGHT = RESULT_BUTTON_HEIGHT + MARGIN * 2;
 public:
-	static bool enableDevMode;
+	static int playMode;
 	static std::mutex btnCallbackLock;
 	static bool isWindowAvailable(BoardWindow*);
 	static int getWindowCount();
+	static void easterAll(Fl_Color);
 	static void closeAll();
 
 	const std::map<int, Fl_Image*> IMG_ICON = {

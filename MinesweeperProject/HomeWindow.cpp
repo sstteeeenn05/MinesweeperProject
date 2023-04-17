@@ -3,19 +3,77 @@
 using namespace HomeWindow;
 
 Fl_Window* HomeWindow::mainWindow = new Fl_Window(WINDOW_WIDTH, WINDOW_HEIGHT, "Minesweeper");
-Fl_Window* HomeWindow::devWindow = new Fl_Window(300, 100, "Dev Toolkit");
 Fl_Button* HomeWindow::devButton;
 Fl_Button* HomeWindow::logo;
 GameArgs* HomeWindow::gameArgs = new GameArgs();
-RankArgs* HomeWindow::rankArgs = new RankArgs();
 ModeArgs* HomeWindow::modeArgs = new ModeArgs();
-std::vector<std::pair<const char*, Widget>> HomeWindow::modeList;
+std::vector<std::pair<const char*, Widget>> HomeWindow::modeListItem;
 std::map<const char*, Widget> HomeWindow::buttonList;
 
+Fl_Window* HomeWindow::devWindow = new Fl_Window(270, 100, "Dev Toolkit");
+Fl_Button* HomeWindow::printButton;
+Fl_Choice* HomeWindow::printList;
+std::vector<std::pair<const char*, Widget>> HomeWindow::printListItem;
+Fl_Slider* HomeWindow::volumeSlider;
+
+Fl_Window* HomeWindow::rankWindow = new Fl_Window(WINDOW_WIDTH, WINDOW_WIDTH, "LeaderBoard");
+std::vector<RankArgs*> HomeWindow::leaderboardList;
+
+int HomeWindow::loadCounter = 0;
+bool HomeWindow::easterEgg = false;
+Fl_Timer* HomeWindow::easterEggTimer = new Fl_Timer(FL_HIDDEN_TIMER,0,0,0,0,"");
+
 void HomeWindow::open() {
+	PlaySound(L"audio\\funkytown.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
 	initVariables();
 
 	mainWindow->begin();
+	initMainWindow();
+	mainWindow->end();
+	mainWindow->callback(HomeWindow::close);
+
+	devWindow->begin();
+	initDevWindow();
+	devWindow->end();
+	devWindow->callback([](Fl_Widget*, void*) {
+		HomeWindow::devButton->value(0);
+		HomeWindow::devButton->do_callback();
+	});
+
+	mainWindow->show();
+}
+
+void HomeWindow::initVariables() {
+	gameArgs->window = new BoardWindow();
+	gameArgs->modeArgs = modeArgs;
+
+	modeListItem = {
+		{"Read Board File", {MODE_READ_BOARD, &HomeWindow::selectMode}},
+		{"Input Mine Count", {MODE_INPUT_COUNT, &HomeWindow::selectMode}},
+		{"Input Respawn Rate", {MODE_INPUT_RATE, &HomeWindow::selectMode}}
+	};
+
+	buttonList = {
+		{"New Game", {0, &HomeWindow::loadGame}},
+		{"Leaderboard", {1, &HomeWindow::openRank}},
+		{"Exit", {2, &HomeWindow::close}}
+	};
+
+	printListItem = {
+		{"GameState", {PRINT_STATE}},
+		{"GameBoard", {PRINT_BOARD}},
+		{"GameAnswer", {PRINT_ANSWER}},
+		{"BombCount", {PRINT_BOMB_COUNT}},
+		{"FlagCount", {PRINT_FLAG_COUNT}},
+		{"OpenBlankCount", {PRINT_OPEN_BLANK}},
+		{"RemainBlankCount", {PRINT_REMAIN_BLANK}}
+	};
+
+	easterEggTimer->value(0);
+	mainWindow->color(FL_GRAY);
+}
+
+void HomeWindow::initMainWindow() {
 	initLogo();
 	createModeList();
 	createDevButton();
@@ -23,13 +81,6 @@ void HomeWindow::open() {
 	createInput();
 	createButton();
 	initDefaultChoice();
-	mainWindow->end();
-	mainWindow->callback(HomeWindow::close);
-
-	devWindow->begin();
-
-	devWindow->end();
-	mainWindow->show();
 }
 
 void HomeWindow::initLogo() {
@@ -40,31 +91,15 @@ void HomeWindow::initLogo() {
 	});
 }
 
-void HomeWindow::initVariables() {
-	gameArgs->window = new BoardWindow();
-	gameArgs->modeArgs = modeArgs;
-
-	modeList = {
-		{"Read Board File", {0, &HomeWindow::selectMode}},
-		{"Input Mine Count", {1, &HomeWindow::selectMode}},
-		{"Input Respawn Rate", {2, &HomeWindow::selectMode}}
-	};
-
-	buttonList = {
-		{"New Game", {0, &HomeWindow::loadGame}},
-		{"Leaderboard", {1, &HomeWindow::openRank}},
-		{"Exit", {2, &HomeWindow::close}}
-	};
-}
-
 void HomeWindow::createModeList() {
 	modeArgs->mode = new Fl_Choice(LABEL_WIDTH, COMPONENT_Y[0], MENU_MODE_WIDTH, COMPONENT_HEIGHT, "Mode:");
-	for (auto &item : modeList) modeArgs->mode->add(item.first, "", item.second.callback, modeArgs);
+	for (auto &item : modeListItem) modeArgs->mode->add(item.first, "", item.second.callback, modeArgs);
 	mainWindow->add(modeArgs->mode);
 }
 
 void HomeWindow::createDevButton() {
 	devButton = new Fl_Light_Button(LABEL_WIDTH + MENU_MODE_WIDTH + MARGIN, COMPONENT_Y[0], 130, COMPONENT_HEIGHT, " Developer Mode");
+	devButton->color2(FL_GREEN);
 	devButton->callback([](Fl_Widget* w, void* args) {
 		auto devButton = (Fl_Light_Button*)w;
 		devButton->value() ? openDevWindow() : closeDevWindow();
@@ -80,7 +115,7 @@ void HomeWindow::openDevWindow() {
 	secondButton->label("Start Game");
 	secondButton->callback((Fl_Callback*)&HomeWindow::startGame);
 
-	BoardWindow::enableDevMode = true;
+	BoardWindow::playMode = PLAY_MODE_DEV;
 	Handler::enableOutput();
 	mainWindow->show();
 	devWindow->show();
@@ -94,7 +129,7 @@ void HomeWindow::closeDevWindow() {
 	secondButton->label("Leaderboard");
 	secondButton->callback((Fl_Callback*)&HomeWindow::openRank);
 
-	BoardWindow::enableDevMode = false;
+	BoardWindow::playMode = PLAY_MODE_NORMAL;
 	Handler::disableOutput();
 	devWindow->hide();
 }
@@ -102,7 +137,7 @@ void HomeWindow::closeDevWindow() {
 void HomeWindow::createBoardChooser() {
 	auto chooser = new Fl_File_Chooser("board.txt", CHOOSER_ARGS);
 	auto iptPath = new Fl_Input(LABEL_WIDTH, COMPONENT_Y[1], PATH_WIDTH, COMPONENT_HEIGHT, "Path:");
-	auto btnChooser = new Fl_Button(WINDOW_WIDTH - CHOOSER_WIDTH - MARGIN, COMPONENT_Y[1], CHOOSER_WIDTH, COMPONENT_HEIGHT, "...");
+	auto btnChooser = new Fl_Button(WINDOW_WIDTH - CHOOSER_WIDTH - MARGIN, COMPONENT_Y[1], CHOOSER_WIDTH, COMPONENT_HEIGHT, "@fileopen");
 
 	modeArgs->iptPath = iptPath;
 	modeArgs->chooser = chooser;
@@ -192,6 +227,30 @@ void HomeWindow::initDefaultChoice(){
 	selectMode(NULL, modeArgs);
 }
 
+void HomeWindow::initDevWindow() {
+	createPrintChoice();
+	createVolumeSlider();
+}
+
+void HomeWindow::createPrintChoice() {
+	printButton = new Fl_Button(MARGIN, MARGIN, 50, COMPONENT_HEIGHT, "Print");
+	printButton->callback(HomeWindow::selectPrint);
+	printList = new Fl_Choice(MARGIN * 2 + 50, MARGIN, 200, COMPONENT_HEIGHT);
+	for (auto& item : printListItem) printList->add(item.first);
+	printList->value(0);
+}
+
+void HomeWindow::createVolumeSlider() {
+	volumeSlider = new Fl_Slider(FL_HOR_NICE_SLIDER, MARGIN, MARGIN * 2 + COMPONENT_HEIGHT, 260, 20, "Volumn:");
+	volumeSlider->color2(FL_GREEN);
+	volumeSlider->range(0, 255);
+	DWORD volume;
+	waveOutGetVolume(NULL, &volume);
+	volumeSlider->value(volume >> 8);
+	volumeSlider->callback(HomeWindow::changeVolume);
+	volumeSlider->do_callback();
+}
+
 void HomeWindow::selectMode(Fl_Widget* w, void* args) {
 	srand(time(NULL));
 	auto modeArgs = (ModeArgs*)args;
@@ -248,7 +307,17 @@ void HomeWindow::loadGame(Fl_Widget* w, void* args) {
 		}
 	});
 
-	if (!BoardWindow::enableDevMode) startGame(w, args);
+	if (BoardWindow::playMode == PLAY_MODE_DEV) {
+		loadCounter++;
+		if (easterEgg = loadCounter >= 5) {
+			//system("start https://www.youtube.com/watch?v=qMQ-y9dHE2k");
+			easterEggTimer->callback(HomeWindow::easterEggCallback);
+			easterEggTimer->value(0.02);
+		}
+	} else {
+		loadCounter = 0;
+		startGame(w, args);
+	}
 }
 
 void HomeWindow::startGame(Fl_Widget* w, void* args) {
@@ -256,15 +325,18 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 	auto board = bw->board;
 
 	if (!Handler::execute("StartGame", [&] {board->startGame(); })) return;
-	
-	devButton->deactivate();
-	bw->reload(-1, -1);
-	bw->mainWindow->show();
 
-	if (!BoardWindow::enableDevMode) gameArgs->window = new BoardWindow();
+	auto devWindowCallback = std::move(devWindow->callback());
+	devWindow->callback((Fl_Callback*)nullptr);
+	devButton->deactivate();
+	bw->mainWindow->show();
+	bw->reload(-1, -1);
+
+	if (BoardWindow::playMode == PLAY_MODE_NORMAL) gameArgs->window = new BoardWindow();
 	while (BoardWindow::isWindowAvailable(bw)) Fl::wait();
-	if (BoardWindow::enableDevMode) gameArgs->window = new BoardWindow();
+	if (BoardWindow::playMode == PLAY_MODE_DEV) gameArgs->window = new BoardWindow();
 	while (BoardWindow::getWindowCount()) Fl::wait();
+	devWindow->callback(devWindowCallback);
 	devButton->activate();
 }
 
@@ -275,6 +347,38 @@ void HomeWindow::openRank(Fl_Widget* w, void* args) {
 
 void HomeWindow::close(Fl_Widget* w, void* args) {
 	BoardWindow::closeAll();
-	HomeWindow::devWindow->hide();
-	HomeWindow::mainWindow->hide();
+	devButton->value(0);
+	devButton->do_callback();
+	devWindow->hide();
+	mainWindow->hide();
+	PlaySound(NULL, NULL, SND_ASYNC);
+}
+
+void HomeWindow::selectPrint(Fl_Widget* w, void* args){
+	auto board = gameArgs->window->board;
+	int selection = printList->value();
+
+	Handler::execute(std::string("Print ") + std::string(printListItem[selection].first), [&] {
+		board->print(selection);
+	});
+}
+
+void HomeWindow::changeVolume(Fl_Widget* w, void* args) {
+	auto volumeSlider = (Fl_Slider*)w;
+	double volume = volumeSlider->value();
+	waveOutSetVolume(NULL, ((DWORD)volume) << 8);
+	std::string& label = *(new std::string("Volume:"));
+	label += std::to_string((int)(volume / 255 * 1000) / 10) + "%";
+	volumeSlider->label(label.c_str());
+}
+
+void HomeWindow::easterEggCallback(Fl_Widget* w, void* args){
+	uchar r, g, b;
+	uchar color[3] = { rand() % 128 ,rand() % 128 ,rand() % 128 };
+	color[rand() % 3] += 128;
+	Fl_Color c = fl_rgb_color(color[0], color[1], color[2]);
+	mainWindow->color(c);
+	BoardWindow::easterAll(c);
+	Fl::redraw();
+	easterEggTimer->value(0.02);
 }
