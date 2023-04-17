@@ -182,7 +182,7 @@ void Board::load(int inputRow, int inputColumn, int mineCount) {
     countBlank();
 }
 
-void Board::submitScore(const std::string& username, const double time) const {
+void Board::submitScore(const std::string& username, double time) const {
     system("if not exist submit mkdir submit");
     std::ofstream leaderBoard("submit/leaderBoard.txt",std::ofstream::app);
     

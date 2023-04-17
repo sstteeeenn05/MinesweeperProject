@@ -34,7 +34,7 @@ public:
 
     void load(int inputRow, int inputColumn, int mineCount);
 
-    void submitScore(const std::string& username, const double time) const;
+    void submitScore(const std::string& username, double time) const;
 
 	void startGame();
 
