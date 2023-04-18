@@ -1,3 +1,11 @@
+/*****************************************************************
+* File: command.hpp
+ * Author: ­ð¤_µx¡B§d²»ºö¡B´¿±R®¦¡BÃ¹¬ý²M
+ * Create Date: 2023/04/13
+ * Editor: ­ð¤_µx¡B§d²»ºö¡B´¿±R®¦¡BÃ¹¬ý²M
+ * Update Date: 2023/04/18
+ * Description: input and output
+ *********************************************************************/
 #pragma once
 
 #include <map>
@@ -21,14 +29,22 @@ const std::map<std::string, int> PRINT_TABLE =
 	{"RemainBlankCount", PRINT_REMAIN_BLANK}
 };
 
-std::string toStringWithPrecisionTwo(double input) {
+// Intents: to set the input to the form
+// Pre: input
+// Post: change to 2 precision form
+std::string toStringWithPrecisionTwo(double input) 
+{
 	std::ostringstream out("");
 	out.precision(2);
 	out << std::fixed <<input;
 	return std::move(out).str();
 }
 
-int openCommandFile(std::string inputPath, std::string outputPath) {
+// Intents: to input the file and output the answer
+// Pre: inputPath and outputPath
+// Post: output the answer in the outputPath
+int openCommandFile(std::string inputPath, std::string outputPath) 
+{
 	std::ifstream file;
 	file.open(inputPath, std::ios::in);
 	bool isWinLosePrinted = false;
@@ -54,7 +70,7 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 				}
 				else //it is a valid output
 				{
-					Handler::execute("Print " + output, [&] { board.print(PRINT_TABLE.at(output)); }); //call lambda to cout 
+					Handler::execute("Print " + output, [&] { board.print(PRINT_TABLE.at(output)); }); //call lambda to cout correspond output
 				}
 			}
 			else if (command == "Load")
@@ -67,14 +83,14 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 					file >> filePath;
 					Handler::execute("Load BoardFile " + filePath, [&] {board.load(filePath.c_str()); });
 				}
-				else if (mode == "RandomCount")
+				else if (mode == "RandomCount") //make a file with specific amounts of bombs
 				{
 					int m, n, bombAmount;
 					file >> m >> n >> bombAmount;
 					Handler::execute("Load RandomCount " + std::to_string(m) + " " + std::to_string(n) + " " + std::to_string(bombAmount),
 						[&] {board.load(m, n, bombAmount); });
 				}
-				else if (mode == "RandomRate")
+				else if (mode == "RandomRate") //make a file with specific rates of bombs
 				{
 					int m, n;
 					double bombRate;
@@ -82,7 +98,7 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 					Handler::execute("Load RandomCount " + std::to_string(m) + " " + toStringWithPrecisionTwo(n) + " " + std::to_string(bombRate),
 						[&] {board.load(m, n, bombRate); });
 				}
-				else
+				else //if the input is invalid
 				{
 					command += " " + mode;
 					if (file.peek() != '\n') //if it is a sentence
@@ -129,7 +145,8 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 					isWinLosePrinted = false;
 					Handler::execute("Replay", [&] { board = Board(); });
 				}
-				else {
+				else 
+				{
 					Handler::execute("Replay", [&] { throw std::exception(); });
 				}
 			}
@@ -141,11 +158,13 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 					Handler::execute("Quit", [&] {});
 					break;
 				}
-				else {
+				else
+				{
 					Handler::execute("Quit", [&] { throw std::exception(); });
 				}
 			}
-			else {
+			else 
+			{
 				if (file.peek() != '\n') //if it is a sentence
 				{
 					std::string trash;
@@ -156,18 +175,23 @@ int openCommandFile(std::string inputPath, std::string outputPath) {
 			}
 		}
 	}
-	else {
+	else 
+	{
 		std::cout << "Failed to open the input or output file" << std::endl;
 		if (file.is_open()) file.close();
 		if (Handler::outputFile.is_open()) Handler::outputFile.close();
 		return -1;
 	}
-	if(file.is_open()) file.close();
-	if (Handler::outputFile.is_open()) Handler::outputFile.close();
+	if(file.is_open()) file.close(); //close the file if it has been opened successfully
+	if (Handler::outputFile.is_open()) Handler::outputFile.close(); //close the file if it has been opened successfully
 	return 0;
 }
 
-int openCommandInput() {
+// Intents: to input the command and output the answer
+// Pre: none
+// Post: output the answer on the screen
+int openCommandInput() 
+{
 	Handler::init(METHOD_CMD_INPUT);
 	Board board;
 	std::string input;
@@ -295,6 +319,9 @@ int openCommandInput() {
 	return 0;
 }
 
+// Intents: open GUI
+// Pre: none
+// Post: 
 int openGUI() {
 	Handler::init(METHOD_GUI);
 	HomeWindow::open();
