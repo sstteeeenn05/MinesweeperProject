@@ -251,7 +251,6 @@ void HomeWindow::initRecordWindow() {
 	recordList->resize(MARGIN, MARGIN, RECORD_WINDOW_WIDTH - MARGIN * (recordListItem.size() > 4 ? 4 : 2), RECORD_WINDOW_HEIGHT - MARGIN * 2);
 	recordView->add(recordList);
 	recordWindow->add(recordView);
-	std::cout << recordListItem.size() << std::endl;
 }
 
 void HomeWindow::clearRecordList() {
@@ -259,8 +258,8 @@ void HomeWindow::clearRecordList() {
 	for (int i = 0; i < len; i++) recordList->remove(recordList->array()[0]);
 	recordListItem.clear();
 	recordWindow->redraw();
-	//recordView->remove(recordList);
-	//recordWindow->remove(recordView);
+	recordView->remove(recordList);
+	recordWindow->remove(recordView);
 }
 
 void HomeWindow::readRecordFile() {
@@ -368,6 +367,7 @@ void HomeWindow::loadGame(Fl_Widget* w, void* args) {
 	if (BoardWindow::playMode == PLAY_MODE_DEV) {
 		loadCounter++;
 		if (easterEgg = loadCounter >= 5) {
+			PlaySound(NULL, NULL, SND_ASYNC);
 			system("start https://www.youtube.com/watch?v=qMQ-y9dHE2k");
 			easterEggTimer->callback(HomeWindow::easterEggCallback);
 			easterEggTimer->value(0.02);
