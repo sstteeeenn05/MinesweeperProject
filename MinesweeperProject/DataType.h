@@ -104,12 +104,13 @@ struct GameArgs {
 	ModeArgs* modeArgs;
 };
 
-struct RankArgs {
+struct RecordArgs {
 	int id;
-	std::string userName;
-	int time;
+	std::string name;
+	double time;
 	int row, col;
-	int bombCount;
+	int count;
+	std::string strTime, strSize;
 };
 
 struct BoardArgs {
@@ -122,7 +123,7 @@ struct BoardArgs {
     int openBlankCount = 0;
     int remainBlankCount = 0;
 	int status = BOARD_STATUS_CONTINUE;
-	int mode = MODE_READ_BOARD;
+	int mode = MODE_INPUT_COUNT;
 	int state = STATE_STANDBY;
 	std::string path = "board.txt";
 };

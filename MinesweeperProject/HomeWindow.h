@@ -24,8 +24,10 @@
 #include "FL/Fl_File_Chooser.H"
 #include "FL/Fl_Light_Button.H"
 #include "FL/Fl_Menu_Item.H"
+#include "FL/Fl_Pack.H"
 #include "FL/Fl_PNG_Image.H"
 #include "FL/Fl_Radio_Round_Button.H"
+#include "FL/Fl_Scroll.H"
 #include "FL/Fl_Slider.H"
 #include "FL/Fl_Spinner.H"
 #include "FL/Fl_Timer.H"
@@ -50,6 +52,8 @@ namespace HomeWindow{
 	const int BUTTON_WIDTH = 120;
 	const int BUTTON_HEIGHT = 40;
 	const int MARGIN = 10;
+	const int RECORD_WINDOW_WIDTH = 300;
+	const int RECORD_WINDOW_HEIGHT = 340;
 
 	extern Fl_Window* mainWindow;
 	extern Fl_Button* devButton;
@@ -65,8 +69,10 @@ namespace HomeWindow{
 	extern std::vector<std::pair<const char*, Widget>> printListItem;
 	extern Fl_Slider* volumeSlider;
 
-	extern Fl_Window* rankWindow;
-	extern std::vector<RankArgs*> leaderboardList;
+	extern Fl_Window* recordWindow;
+	extern Fl_Scroll* recordView;
+	extern Fl_Pack* recordList;
+	extern std::vector<RecordArgs*> recordListItem;
 
 	extern int loadCounter;
 	extern bool easterEgg;
@@ -90,10 +96,16 @@ namespace HomeWindow{
 	void createPrintChoice();
 	void createVolumeSlider();
 
+	void initRecordWindow();
+	void clearRecordList();
+	void readRecordFile();
+	void insertRecord();
+
 	void selectMode(Fl_Widget*, void*);
 	void loadGame(Fl_Widget*, void*);
 	void startGame(Fl_Widget*, void*);
-	void openRank(Fl_Widget*, void*);
+	void openRecord(Fl_Widget*, void*);
+	void closeRecord(Fl_Widget*, void*);
 	void close(Fl_Widget*, void*);
 
 	void selectPrint(Fl_Widget*, void*);

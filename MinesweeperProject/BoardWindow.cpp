@@ -1,7 +1,22 @@
 #include "BoardWindow.h"
 
-int BoardWindow::playMode = PLAY_MODE_NORMAL;
 std::unordered_set<BoardWindow*> BoardWindow::objAddrList;
+const std::map<int, Fl_Image*> BoardWindow::IMG_ICON = {
+		{MINE_MINE,(new Fl_PNG_Image("img/mine.png"))->copy(30, 30)},
+		{MINE_FLAG,(new Fl_PNG_Image("img/flag.png"))->copy(30, 30)},
+		{MINE_SUS,(new Fl_PNG_Image("img/sus.png"))->copy(30, 30)}
+};
+const std::map<int, Fl_Image*> BoardWindow::IMG_REACT = {
+		{MINE_MINE,(new Fl_PNG_Image("img/joy.png"))->copy(30, 30)},
+		{MINE_FLAG,(new Fl_PNG_Image("img/ayo.png"))->copy(30, 30)},
+		{MINE_SUS,(new Fl_PNG_Image("img/flushed.png"))->copy(30, 30)},
+		{MINE_NULL,(new Fl_PNG_Image("img/innocent.png"))->copy(30, 30)}
+};
+const std::map<int, Fl_Image*> BoardWindow::IMG_RESULT = {
+		{BOARD_STATUS_LOSE,(new Fl_PNG_Image("img/joy.png"))->copy(180, 180)},
+		{BOARD_STATUS_WIN,(new Fl_PNG_Image("img/innocent.png"))->copy(180, 180)}
+};
+int BoardWindow::playMode = PLAY_MODE_NORMAL;
 std::mutex BoardWindow::btnCallbackLock;
 
 int BoardWindow::getWindowCount() {
@@ -21,6 +36,7 @@ void BoardWindow::easterAll(Fl_Color c) {
 
 void BoardWindow::closeAll() {
 	for (auto bw : objAddrList) delete bw;
+	PlaySound(L"audio\\funkytown.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
 }
 
 BoardWindow::~BoardWindow() {
@@ -37,11 +53,12 @@ void BoardWindow::reload(int x, int y) {
 		x == -1 ? mainWindow->x() : x,
 		y == -1 ? mainWindow->y() : y,
 		MARGIN * 2 + BTN_MINE_SIZE * boardArgs.column,
-		MARGIN * 2 + BTN_MINE_SIZE * boardArgs.row
+		MARGIN * 3 + TOOLBAR_HEIGHT + BTN_MINE_SIZE * boardArgs.row
 	);
 	removeMine();
 
 	mainWindow->begin();
+	initToolbar();
 	initMine();
 	mainWindow->end();
 	if (playMode == PLAY_MODE_DEV) mainWindow->callback((Fl_Callback*)nullptr);
@@ -50,16 +67,31 @@ void BoardWindow::reload(int x, int y) {
 		PlaySound(L"audio\\funkytown.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
 	}, (void*)this);
 
+	mainWindow->show();
 	initWindowTitle();
 	initResultWindow();
 	objAddrList.insert(this);
 	PlaySound(L"audio\\amongus.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
+	startTime = clock();
 }
 
-void BoardWindow::initWindowTitle() {
-	std::ostringstream title("");
-	title << "Game (" << boardArgs.column << "x" << boardArgs.row << ") 0.0%" << std::endl;
-	mainWindow->label(title.str().c_str());
+void BoardWindow::initToolbar() {
+	timer->resize(MARGIN, MARGIN, (mainWindow->w() - MARGIN * 4 - TOOLBAR_HEIGHT) / 2, TOOLBAR_HEIGHT);
+	timer->direction(1);
+	timer->value(1LL << 16);
+	timer->labelfont(FL_SCREEN_BOLD);
+	timer->suspended(false);
+	timer->callback([](Fl_Widget* w, void*) {fl_alert(std::to_string(((Fl_Timer*)w)->value()).c_str()); });
+	reaction->resize(MARGIN * 2 + timer->w(), MARGIN, TOOLBAR_HEIGHT, TOOLBAR_HEIGHT);
+	reaction->image(IMG_REACT.at(MINE_NULL));
+	bombCountView->resize(MARGIN * 3 + timer->w() + reaction->w(), MARGIN, timer->w(), TOOLBAR_HEIGHT);
+	std::string *bombCount = new std::string(std::to_string(boardArgs.bombCount));
+	bombCountView->label(bombCount->c_str());
+	bombCountView->labelfont(FL_SCREEN_BOLD);
+
+	mainWindow->add(timer);
+	mainWindow->add(reaction);
+	mainWindow->add(bombCountView);
 }
 
 void BoardWindow::initMine(){
@@ -67,15 +99,16 @@ void BoardWindow::initMine(){
 		std::vector<MineArgs*> mines;
 		for (int j = 0; j < boardArgs.column; j++) {
 			MineArgs* mineArgs = new MineArgs();
-			mineArgs->button = new Fl_Button(MARGIN + BTN_MINE_SIZE * j, MARGIN + BTN_MINE_SIZE * i, BTN_MINE_SIZE, BTN_MINE_SIZE);
+			mineArgs->button = new Fl_Button(MARGIN + BTN_MINE_SIZE * j, MARGIN * 2 + TOOLBAR_HEIGHT + BTN_MINE_SIZE * i, BTN_MINE_SIZE, BTN_MINE_SIZE);
 			mineArgs->button->callback([](Fl_Widget* w, void* args) {
 				auto mineArgs = (MineArgs*)args;
 				BoardWindow::btnCallbackLock.lock();
-				std::string title = (std::stringstream(" ") << mineArgs->x << " " << mineArgs->y).str();
+				std::string title = (std::stringstream(" ") << mineArgs->y << " " << mineArgs->x).str();
 				if (Fl::event_button() == FL_LEFT_MOUSE)
 					Handler::execute("Leftclick" + title, [&] { mineArgs->board->leftClick(mineArgs->x, mineArgs->y); });
 				if (Fl::event_button() == FL_RIGHT_MOUSE)
 					Handler::execute("Rightclick" + title, [&] { mineArgs->board->rightClick(mineArgs->x, mineArgs->y); });
+				mineArgs->parent->updateReaction(mineArgs->parent->boardArgs.board[mineArgs->y][mineArgs->x]);
 				mineArgs->parent->update();
 				BoardWindow::btnCallbackLock.unlock();
 			}, (void*)mineArgs);
@@ -97,7 +130,21 @@ void BoardWindow::removeMine() {
 	mineList.clear();
 }
 
+void BoardWindow::initWindowTitle() {
+	std::ostringstream title("");
+	title << "Game (" << boardArgs.column << "x" << boardArgs.row << ") 0.0%" << std::endl;
+	mainWindow->label(title.str().c_str());
+}
+
+void BoardWindow::updateReaction(char value) {
+	if (IMG_REACT.find(value) != IMG_REACT.end()) reaction->image(IMG_REACT.at(value));
+	else reaction->image(IMG_REACT.at(MINE_NULL));
+	reaction->redraw();
+}
+
 void BoardWindow::update() {
+	endTime = clock();
+
 	std::ostringstream title("");
 	title << "Game (" << boardArgs.column << "x" << boardArgs.row << ") " << std::fixed << std::setprecision(1) <<
 		(double)boardArgs.openBlankCount / (boardArgs.openBlankCount + boardArgs.remainBlankCount) * 100 << "%" << std::endl;
@@ -138,16 +185,18 @@ void BoardWindow::update() {
 
 	switch (boardArgs.status) {
 		case BOARD_STATUS_WIN:
+			timer->suspended(true);
 			win();
 			break;
 		case BOARD_STATUS_LOSE:
+			timer->suspended(true);
 			lose();
 			break;
 		case BOARD_STATUS_CONTINUE:
 			return;
 	}
 
-	openResultWindow();
+	if(playMode!=PLAY_MODE_REPLAY) openResultWindow();
 }
 
 void BoardWindow::win() {
@@ -157,7 +206,7 @@ void BoardWindow::win() {
 		for (int j = 0; j < boardArgs.column; j++) {
 			clock_t start = clock();
 			auto currentButton = mineList[i][j]->button;
-			const auto currentValue = (int)boardArgs.answer[i][j];
+			const auto currentValue = (int)boardArgs.board[i][j];
 			if (currentButton->label()) delete currentButton->label();
 			currentButton->image(nullptr);
 			currentButton->label(nullptr);
@@ -178,7 +227,7 @@ void BoardWindow::lose() {
 		for (int j = 0; j < boardArgs.column; j++) {
 			clock_t start = clock();
 			auto currentButton = mineList[i][j]->button;
-			const auto currentValue = (int)boardArgs.answer[i][j];
+			const auto currentValue = (int)boardArgs.board[i][j];
 			if (currentValue == MINE_MINE)
 				currentButton->image(IMG_ICON.at(MINE_MINE));
 			else currentButton->deactivate();
@@ -198,7 +247,6 @@ void BoardWindow::initResultWindow() {
 	createResultButton();
 
 	resultWindow->end();
-	resultWindow->callback([](Fl_Widget* w, void* args) { delete (BoardWindow*)args; }, (void*)this);
 }
 
 void BoardWindow::initResultVariables() {
@@ -212,15 +260,32 @@ void BoardWindow::initResultVariables() {
 		}, (void*)this}}
 	};
 	if(playMode == PLAY_MODE_DEV) resultButtonList = {
-		{"Replay", {0, [](Fl_Widget* w,void* args) { delete (BoardWindow*)args; },(void*)this}},
-		{"Quit",{1, &HomeWindow::close}}
+		{"Replay", {0, [](Fl_Widget* w, void* args) {
+			delete (BoardWindow*)args;
+			PlaySound(L"audio\\funkytown.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
+		},(void*)this}},
+		{"Quit",{1,[](Fl_Widget* w,void* args) {
+			Handler::execute("Quit",[] {});
+			HomeWindow::close(w,args);
+		}}}
 	};
-	resultWindow->resize(resultWindow->x(), resultWindow->y(), MARGIN + (RESULT_BUTTON_WIDTH + MARGIN) * resultButtonList.size(), RESULT_WINDOW_HEIGHT);
+	resultLabel->labelfont(FL_SCREEN_BOLD);
+	resultLabel->labelsize(RESULT_LABEL_SIZE);
+	if (playMode == PLAY_MODE_NORMAL) {
+		resultWindow->add(resultImage);
+		resultWindow->add(resultLabel);
+		resultWindow->add(resultTime);
+	} else {
+		resultWindow->remove(resultImage);
+		resultWindow->remove(resultLabel);
+		resultWindow->remove(resultTime);
+	}
+	resultWindow->resize(resultWindow->x(), resultWindow->y(), MARGIN + (RESULT_BUTTON_WIDTH + MARGIN) * resultButtonList.size(), playMode == PLAY_MODE_NORMAL ? RESULT_WINDOW_HEIGHT : (RESULT_BUTTON_HEIGHT + MARGIN * 2));
 }
 
 void BoardWindow::createResultButton() {
 	for (auto& button : resultButtonList) {
-		auto component = new Fl_Button(MARGIN + (MARGIN + RESULT_BUTTON_WIDTH) * button.second.index, MARGIN, RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT, button.first);
+		auto component = new Fl_Button(MARGIN + (MARGIN + RESULT_BUTTON_WIDTH) * button.second.index, playMode == PLAY_MODE_NORMAL ? (MARGIN * 2 + RESULT_IMG_SIZE) : MARGIN, RESULT_BUTTON_WIDTH, RESULT_BUTTON_HEIGHT, button.first);
 		button.second.component = component;
 		button.second.component->callback(button.second.callback, button.second.args);
 	}
@@ -231,6 +296,9 @@ void BoardWindow::playAgain(Fl_Widget* w, void* args) {
 	bw->board->maskBoard();
 	bw->initWindowTitle();
 	bw->update();
+	bw->timer->value(1LL << 16);
+	bw->startTime = clock();
+	bw->reaction->image(IMG_REACT.at(MINE_NULL));
 	bw->mainWindow->redraw();
 	bw->resultWindow->hide();
 	bw->board->startGame();
@@ -278,17 +346,37 @@ void BoardWindow::newGame(Fl_Widget* w, void* args) {
 	int y = oldBoardWindow->mainWindow->y();
 	delete oldBoardWindow;
 	newBoard->startGame();
-	newBoardWindow->mainWindow->show();
 	newBoardWindow->reload(x, y);
 }
 
 void BoardWindow::submitScore(Fl_Widget* w, void* args) {
 	auto bw = (BoardWindow*)args;
-
+	const char* userName = fl_input("Please enter your name",nullptr);
+	if (!userName) return fl_alert("Submit failed");
+	bw->board->submitScore(std::string(userName), ((double)bw->endTime - bw->startTime) / CLOCKS_PER_SEC);
+	bw->resultButtonList["Submit Score"].component->deactivate();
 }
 
 void BoardWindow::openResultWindow() {
-	resultWindow->label((boardArgs.status == BOARD_STATUS_WIN) ? "You Win!" : "You Lose");
+	std::string time = "Duration:\n" + std::to_string(((double)endTime - startTime) / CLOCKS_PER_SEC);
+	resultWindow->label(boardArgs.status == BOARD_STATUS_WIN ? "You Win!" : "You Lose!");
+	resultImage->image(IMG_RESULT.at(boardArgs.status));
+	resultLabel->label(boardArgs.status == BOARD_STATUS_WIN ? "You Win!" : "You Lose!");
+	resultTime->label(time.c_str());
+	if (playMode == PLAY_MODE_NORMAL) {
+		auto submitButton = resultButtonList["Submit Score"].component;
+		if (!submitButton->active()) submitButton->label("Can't submit\nafter replay");
+		if (boardArgs.status == BOARD_STATUS_LOSE) {
+			submitButton->deactivate();
+		}
+		if (boardArgs.mode == MODE_READ_BOARD) {
+			submitButton->deactivate();
+			submitButton->label("Can't submit in\nRead-board mode");
+		}
+	}
+	else {
+		resultWindow->resize(resultWindow->x(), resultWindow->y(), resultWindow->w(), RESULT_BUTTON_HEIGHT + MARGIN * 2);
+	}
 	resultWindow->hotspot(0, 0);
 	resultWindow->show();
 }

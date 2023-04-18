@@ -10,14 +10,16 @@ ModeArgs* HomeWindow::modeArgs = new ModeArgs();
 std::vector<std::pair<const char*, Widget>> HomeWindow::modeListItem;
 std::map<const char*, Widget> HomeWindow::buttonList;
 
-Fl_Window* HomeWindow::devWindow = new Fl_Window(270, 100, "Dev Toolkit");
+Fl_Window* HomeWindow::devWindow = new Fl_Window(280, 100, "Dev Toolkit");
 Fl_Button* HomeWindow::printButton;
 Fl_Choice* HomeWindow::printList;
 std::vector<std::pair<const char*, Widget>> HomeWindow::printListItem;
 Fl_Slider* HomeWindow::volumeSlider;
 
-Fl_Window* HomeWindow::rankWindow = new Fl_Window(WINDOW_WIDTH, WINDOW_WIDTH, "LeaderBoard");
-std::vector<RankArgs*> HomeWindow::leaderboardList;
+Fl_Window* HomeWindow::recordWindow = new Fl_Window(RECORD_WINDOW_WIDTH, RECORD_WINDOW_HEIGHT, "Record List");
+Fl_Scroll* HomeWindow::recordView = new Fl_Scroll(MARGIN, MARGIN, RECORD_WINDOW_WIDTH - MARGIN * 2, RECORD_WINDOW_HEIGHT - MARGIN * 2);
+Fl_Pack* HomeWindow::recordList = new Fl_Pack(MARGIN, MARGIN, RECORD_WINDOW_WIDTH - MARGIN * 2, RECORD_WINDOW_HEIGHT - MARGIN * 2);
+std::vector<RecordArgs*> HomeWindow::recordListItem;
 
 int HomeWindow::loadCounter = 0;
 bool HomeWindow::easterEgg = false;
@@ -40,6 +42,8 @@ void HomeWindow::open() {
 		HomeWindow::devButton->do_callback();
 	});
 
+	recordWindow->callback(HomeWindow::closeRecord);
+
 	mainWindow->show();
 }
 
@@ -55,7 +59,7 @@ void HomeWindow::initVariables() {
 
 	buttonList = {
 		{"New Game", {0, &HomeWindow::loadGame}},
-		{"Leaderboard", {1, &HomeWindow::openRank}},
+		{"Record List", {1, &HomeWindow::openRecord}},
 		{"Exit", {2, &HomeWindow::close}}
 	};
 
@@ -94,7 +98,6 @@ void HomeWindow::initLogo() {
 void HomeWindow::createModeList() {
 	modeArgs->mode = new Fl_Choice(LABEL_WIDTH, COMPONENT_Y[0], MENU_MODE_WIDTH, COMPONENT_HEIGHT, "Mode:");
 	for (auto &item : modeListItem) modeArgs->mode->add(item.first, "", item.second.callback, modeArgs);
-	mainWindow->add(modeArgs->mode);
 }
 
 void HomeWindow::createDevButton() {
@@ -104,14 +107,13 @@ void HomeWindow::createDevButton() {
 		auto devButton = (Fl_Light_Button*)w;
 		devButton->value() ? openDevWindow() : closeDevWindow();
 	});
-	mainWindow->add(devButton);
 }
 
 void HomeWindow::openDevWindow() {
 	auto firstButton = buttonList["New Game"].component;
 	firstButton->label("Load");
 
-	auto secondButton = buttonList["Leaderboard"].component;
+	auto secondButton = buttonList["Record List"].component;
 	secondButton->label("Start Game");
 	secondButton->callback((Fl_Callback*)&HomeWindow::startGame);
 
@@ -125,9 +127,9 @@ void HomeWindow::closeDevWindow() {
 	auto firstButton = buttonList["New Game"].component;
 	firstButton->label("New Game");
 
-	auto secondButton = buttonList["Leaderboard"].component;
-	secondButton->label("Leaderboard");
-	secondButton->callback((Fl_Callback*)&HomeWindow::openRank);
+	auto secondButton = buttonList["Record List"].component;
+	secondButton->label("Record List");
+	secondButton->callback((Fl_Callback*)&HomeWindow::openRecord);
 
 	BoardWindow::playMode = PLAY_MODE_NORMAL;
 	Handler::disableOutput();
@@ -154,9 +156,6 @@ void HomeWindow::createBoardChooser() {
 	btnChooser->callback([](Fl_Widget* w, void* args) {
 		modeArgs->chooser->show();
 	});
-
-	mainWindow->add(iptPath);
-	mainWindow->add(btnChooser);
 }
 
 void HomeWindow::createInput() {
@@ -172,8 +171,8 @@ void HomeWindow::createInput() {
 	iptColumn->value(DEF_COL);
 	iptRow->value(DEF_ROW);
 	iptNumber->range(1, DEF_COL * DEF_ROW);
-	iptColumn->range(1, MAX_COL);
-	iptRow->range(1, MAX_ROW);
+	iptColumn->range(5, MAX_COL);
+	iptRow->range(5, MAX_ROW);
 
 	modeArgs->iptNumber = iptNumber;
 	modeArgs->iptColumn = iptColumn;
@@ -191,7 +190,7 @@ void HomeWindow::createInput() {
 
 		modeArgs->col = modeArgs->iptColumn->value();
 		modeArgs->row = modeArgs->iptRow->value();
-		modeArgs->iptNumber->range(1, (modeArgs->selection == MODE_INPUT_RATE) ? MAX_PERCENT : modeArgs->col * modeArgs->row);
+		modeArgs->iptNumber->range(5, (modeArgs->selection == MODE_INPUT_RATE) ? MAX_PERCENT : modeArgs->col * modeArgs->row);
 		modeArgs->iptNumber->do_callback();
 	};
 	iptColumn->callback(iptSizeCallback, modeArgs);
@@ -207,11 +206,6 @@ void HomeWindow::createInput() {
 
 		modeArgs->iptNumber->value(modeArgs->number);
 	}, modeArgs);
-
-	mainWindow->add(iptColumn);
-	mainWindow->add(iptRow);
-	mainWindow->add(iptNumber);
-	mainWindow->add(btnRandom);
 }
 
 void HomeWindow::createButton() {
@@ -251,6 +245,70 @@ void HomeWindow::createVolumeSlider() {
 	volumeSlider->do_callback();
 }
 
+void HomeWindow::initRecordWindow() {
+	clearRecordList();
+	readRecordFile();
+	recordList->resize(MARGIN, MARGIN, RECORD_WINDOW_WIDTH - MARGIN * (recordListItem.size() > 4 ? 4 : 2), RECORD_WINDOW_HEIGHT - MARGIN * 2);
+	recordView->add(recordList);
+	recordWindow->add(recordView);
+	std::cout << recordListItem.size() << std::endl;
+}
+
+void HomeWindow::clearRecordList() {
+	auto len = recordList->children();
+	for (int i = 0; i < len; i++) recordList->remove(recordList->array()[0]);
+	recordListItem.clear();
+	recordWindow->redraw();
+	//recordView->remove(recordList);
+	//recordWindow->remove(recordView);
+}
+
+void HomeWindow::readRecordFile() {
+	std::ifstream file("submit\\leaderBoard.txt");
+	if (!file.is_open()) return recordList->add(new Fl_Box(0, 0, RECORD_WINDOW_WIDTH - MARGIN * 2, RECORD_WINDOW_HEIGHT - MARGIN * 2, "No record here"));
+	int id, row, col, count;
+	std::string name;
+	double time;
+	while (file >> id >> name >> time >> row >> col >> count) {
+		auto record = new RecordArgs({ id, name, time, row, col, count });
+		recordListItem.push_back(record);
+	}
+	file.close();
+	insertRecord();
+}
+
+void HomeWindow::insertRecord() {
+	if(!recordListItem.size()) return recordList->add(new Fl_Box(0, 0, RECORD_WINDOW_WIDTH - MARGIN * 2, RECORD_WINDOW_HEIGHT - MARGIN * 2, "No record here"));
+	for (auto itr = recordListItem.rbegin(); itr != recordListItem.rend(); itr++) {
+		auto record = *itr;
+		record->strTime = "Duration:" + (std::stringstream("") << std::fixed << std::setprecision(1) << record->time).str() + " s";
+		record->strSize = std::to_string(record->row) + "x" + std::to_string(record->col) + ", Mine count:" + std::to_string(record->count);
+		auto group = new Fl_Group(0, 0, RECORD_WINDOW_WIDTH - MARGIN * (recordListItem.size() > 4 ? 4 : 2) , 80);
+		group->box(FL_DOWN_BOX);
+		auto name = new Fl_Box(10, 10, 0, 20, record->name.c_str());
+		auto time = new Fl_Box(10, 30, 0, 20, record->strTime.c_str());
+		auto size = new Fl_Box(10, 50, 0, 20, record->strSize.c_str());
+		auto play = new Fl_Button(RECORD_WINDOW_WIDTH - MARGIN * (recordListItem.size() > 4 ? 5 : 3) - 50, 20, 50, 40, "Play");
+		name->labelfont(FL_BOLD);
+		name->align(FL_ALIGN_RIGHT);
+		time->align(FL_ALIGN_RIGHT);
+		size->align(FL_ALIGN_RIGHT);
+		play->callback([](Fl_Widget*,void* args){
+			auto record = (RecordArgs*)args;
+			auto bw = new BoardWindow();
+			std::string path = "submit\\" + std::to_string(record->id) + ".txt";
+			if (!Handler::execute("Load BoardFile " + path, [&] {bw->board->load(path.c_str()); })) return;
+			if (!Handler::execute("StartGame", [&] {bw->board->startGame(); })) return;
+			bw->reload(-1, -1);
+		},record);
+		group->add(name);
+		group->add(time);
+		group->add(size);
+		group->add(play);
+		recordList->add(group);
+	}
+}
+
 void HomeWindow::selectMode(Fl_Widget* w, void* args) {
 	srand(time(NULL));
 	auto modeArgs = (ModeArgs*)args;
@@ -276,7 +334,7 @@ void HomeWindow::selectMode(Fl_Widget* w, void* args) {
 			modeArgs->btnRandom->activate();
 			break;
 	}
-	modeArgs->iptNumber->range(1, (modeArgs->selection == MODE_INPUT_RATE) ? MAX_PERCENT : modeArgs->col * modeArgs->row);
+	modeArgs->iptNumber->range(5, (modeArgs->selection == MODE_INPUT_RATE) ? MAX_PERCENT : modeArgs->col * modeArgs->row);
 	modeArgs->iptNumber->do_callback();
 }
 
@@ -310,7 +368,7 @@ void HomeWindow::loadGame(Fl_Widget* w, void* args) {
 	if (BoardWindow::playMode == PLAY_MODE_DEV) {
 		loadCounter++;
 		if (easterEgg = loadCounter >= 5) {
-			//system("start https://www.youtube.com/watch?v=qMQ-y9dHE2k");
+			system("start https://www.youtube.com/watch?v=qMQ-y9dHE2k");
 			easterEggTimer->callback(HomeWindow::easterEggCallback);
 			easterEggTimer->value(0.02);
 		}
@@ -329,28 +387,44 @@ void HomeWindow::startGame(Fl_Widget* w, void* args) {
 	auto devWindowCallback = std::move(devWindow->callback());
 	devWindow->callback((Fl_Callback*)nullptr);
 	devButton->deactivate();
-	bw->mainWindow->show();
+	if (BoardWindow::playMode == PLAY_MODE_NORMAL) buttonList["Record List"].component->deactivate();
 	bw->reload(-1, -1);
 
 	if (BoardWindow::playMode == PLAY_MODE_NORMAL) gameArgs->window = new BoardWindow();
 	while (BoardWindow::isWindowAvailable(bw)) Fl::wait();
 	if (BoardWindow::playMode == PLAY_MODE_DEV) gameArgs->window = new BoardWindow();
 	while (BoardWindow::getWindowCount()) Fl::wait();
+	if (BoardWindow::playMode == PLAY_MODE_NORMAL) buttonList["Record List"].component->activate();
 	devWindow->callback(devWindowCallback);
 	devButton->activate();
 }
 
-void HomeWindow::openRank(Fl_Widget* w, void* args) {
-	delete w;
-	exit(EXIT_SUCCESS);
+void HomeWindow::openRecord(Fl_Widget* w, void* args) {
+	if (recordWindow->shown()) return closeRecord(w, args);
+	initRecordWindow();
+	devButton->deactivate();
+	buttonList["New Game"].component->deactivate();
+	recordWindow->show();
+	BoardWindow::playMode = PLAY_MODE_REPLAY;
+}
+
+void HomeWindow::closeRecord(Fl_Widget*, void*) {
+	BoardWindow::closeAll();
+	devButton->activate();
+	buttonList["New Game"].component->activate();
+	recordWindow->hide();
+	BoardWindow::playMode = PLAY_MODE_NORMAL;
 }
 
 void HomeWindow::close(Fl_Widget* w, void* args) {
 	BoardWindow::closeAll();
+	closeRecord(w, args);
 	devButton->value(0);
 	devButton->do_callback();
 	devWindow->hide();
 	mainWindow->hide();
+	for (int i = 0; i < mainWindow->children(); i++) delete mainWindow->array()[i];
+	for (int i = 0; i < devWindow->children(); i++) delete devWindow->array()[i];
 	PlaySound(NULL, NULL, SND_ASYNC);
 }
 
@@ -377,6 +451,8 @@ void HomeWindow::easterEggCallback(Fl_Widget* w, void* args){
 	uchar color[3] = { rand() % 128 ,rand() % 128 ,rand() % 128 };
 	color[rand() % 3] += 128;
 	Fl_Color c = fl_rgb_color(color[0], color[1], color[2]);
+	std::string command = "color " + std::to_string(rand() % 9) + std::to_string(rand() % 9);
+	system(command.c_str());
 	mainWindow->color(c);
 	BoardWindow::easterAll(c);
 	Fl::redraw();
