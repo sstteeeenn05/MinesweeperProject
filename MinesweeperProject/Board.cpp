@@ -368,6 +368,7 @@ void Board::maskBoard() {
     // reset the status and state
     boardArgs.status = BOARD_STATUS_CONTINUE;
     boardArgs.state = STATE_STANDBY;
+    boardArgs.flagCount = 0;
 
     // re-mask the board
      boardArgs.board.assign(boardArgs.row, std::vector<char>(boardArgs.column,'#'));
