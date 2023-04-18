@@ -440,10 +440,10 @@ void Board::rightClick(int x, int y) {
             // # -> f -> ? -> # and cycle continues
             boardArgs.board[y][x] = symbol[((i == 2) ? 0 : (i + 1))];
             
-            // if the symbol after change is not flag. then the decrease the flag count
+            // if the symbol right now is not flag. then the decrease the flag count
             if (symbol[i] == MINE_FLAG) boardArgs.flagCount--;
-            // or increase otherwise
-            else boardArgs.flagCount++;
+            // or increase when it is mask
+            else if (symbol[i] == MINE_MASK) boardArgs.flagCount++;
             return;
         }
     }
