@@ -45,6 +45,7 @@ void HomeWindow::open() {
 	recordWindow->callback(HomeWindow::closeRecord);
 
 	mainWindow->show();
+	mainWindow->icon((Fl_RGB_Image*)BoardWindow::IMG_REACT.at(MINE_MINE));
 }
 
 void HomeWindow::initVariables() {
@@ -91,7 +92,8 @@ void HomeWindow::initLogo() {
 	logo = new Fl_Button(MARGIN, LOGO_Y, LOGO_WIDTH, LOGO_HEIGHT);
 	logo->image((new Fl_PNG_Image("img/logo.png"))->copy(LOGO_WIDTH, LOGO_HEIGHT));
 	logo->callback([](Fl_Widget* w, void* args) {
-		system("start https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+		PlaySoundA("audio\\rick.wav", NULL, SND_LOOP | SND_ASYNC);
+		mainWindow->icon((Fl_RGB_Image*)BoardWindow::IMG_REACT.at(MINE_SUS));
 	});
 }
 
@@ -121,6 +123,7 @@ void HomeWindow::openDevWindow() {
 	Handler::enableOutput();
 	mainWindow->show();
 	devWindow->show();
+	devWindow->icon((Fl_RGB_Image*)BoardWindow::IMG_REACT.at(MINE_NULL));
 }
 
 void HomeWindow::closeDevWindow() {
@@ -366,10 +369,10 @@ void HomeWindow::loadGame(Fl_Widget* w, void* args) {
 	if (BoardWindow::playMode == PLAY_MODE_DEV) {
 		loadCounter++;
 		if (easterEgg = loadCounter >= 5) {
-			PlaySound(NULL, NULL, SND_ASYNC);
-			system("start https://www.youtube.com/watch?v=qMQ-y9dHE2k");
+			PlaySoundA("audio\\easter.wav", NULL, SND_ASYNC);
+			mainWindow->icon((Fl_RGB_Image*)BoardWindow::IMG_REACT.at(MINE_SUS));
 			easterEggTimer->callback(HomeWindow::easterEggCallback);
-			easterEggTimer->value(0.02);
+			easterEggTimer->value(13);
 		}
 	} else {
 		loadCounter = 0;
@@ -404,6 +407,7 @@ void HomeWindow::openRecord(Fl_Widget* w, void* args) {
 	devButton->deactivate();
 	buttonList["New Game"].component->deactivate();
 	recordWindow->show();
+	recordWindow->icon((Fl_RGB_Image*)BoardWindow::IMG_REACT.at(MINE_FLAG));
 	BoardWindow::playMode = PLAY_MODE_REPLAY;
 }
 

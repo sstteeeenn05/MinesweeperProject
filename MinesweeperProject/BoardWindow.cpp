@@ -71,6 +71,7 @@ void BoardWindow::reload(int x, int y) {
 	initResultWindow();
 
 	mainWindow->show();
+	mainWindow->icon((Fl_RGB_Image*)IMG_ICON.at(MINE_SUS));
 	updateWindowTitle();
 	updateToolbar();
 	update();
