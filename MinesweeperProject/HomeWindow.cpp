@@ -26,7 +26,7 @@ bool HomeWindow::easterEgg = false;
 Fl_Timer* HomeWindow::easterEggTimer = new Fl_Timer(FL_HIDDEN_TIMER,0,0,0,0,"");
 
 void HomeWindow::open() {
-	PlaySound(L"audio\\funkytown.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
+	PlaySoundA("audio\\funkytown.wav", NULL, SND_LOOP | SND_ASYNC);
 	initVariables();
 
 	mainWindow->begin();
@@ -240,7 +240,7 @@ void HomeWindow::createVolumeSlider() {
 	volumeSlider->range(0, 255);
 	DWORD volume;
 	waveOutGetVolume(NULL, &volume);
-	volumeSlider->value(volume >> 8);
+	volumeSlider->value(volume >> 24);
 	volumeSlider->callback(HomeWindow::changeVolume);
 	volumeSlider->do_callback();
 }
@@ -254,8 +254,7 @@ void HomeWindow::initRecordWindow() {
 }
 
 void HomeWindow::clearRecordList() {
-	auto len = recordList->children();
-	for (int i = 0; i < len; i++) recordList->remove(recordList->array()[0]);
+	while (recordList->children()) recordList->remove(*recordList->array());
 	recordListItem.clear();
 	recordWindow->redraw();
 	recordView->remove(recordList);
@@ -423,8 +422,8 @@ void HomeWindow::close(Fl_Widget* w, void* args) {
 	devButton->do_callback();
 	devWindow->hide();
 	mainWindow->hide();
-	for (int i = 0; i < mainWindow->children(); i++) delete mainWindow->array()[i];
-	for (int i = 0; i < devWindow->children(); i++) delete devWindow->array()[i];
+	while (mainWindow->children()) delete *mainWindow->array();
+	while (devWindow->children()) delete *devWindow->array();
 	PlaySound(NULL, NULL, SND_ASYNC);
 }
 
@@ -440,10 +439,11 @@ void HomeWindow::selectPrint(Fl_Widget* w, void* args){
 void HomeWindow::changeVolume(Fl_Widget* w, void* args) {
 	auto volumeSlider = (Fl_Slider*)w;
 	double volume = volumeSlider->value();
-	waveOutSetVolume(NULL, ((DWORD)volume) << 8);
+	waveOutSetVolume(NULL, ((DWORD)volume) << 24 | ((DWORD)volume) << 8);
 	std::string& label = *(new std::string("Volume:"));
 	label += std::to_string((int)(volume / 255 * 1000) / 10) + "%";
 	volumeSlider->label(label.c_str());
+	devWindow->redraw();
 }
 
 void HomeWindow::easterEggCallback(Fl_Widget* w, void* args){

@@ -48,10 +48,10 @@ public:
 
 	Fl_Window* mainWindow = new Fl_Window(MARGIN * 2 + BTN_MINE_SIZE * boardArgs.column, MARGIN * 2 + BTN_MINE_SIZE * boardArgs.row);
 	std::vector<std::vector<MineArgs*>> mineList;
-	Fl_Timer* timer = new Fl_Timer(FL_VALUE_TIMER,0,0,0,0, "");
+	Fl_Timer* timer;
 	clock_t startTime, endTime;
-	Fl_Box* reaction = new Fl_Box(FL_UP_BOX, 0,0,0,0, nullptr);
-	Fl_Box* bombCountView = new Fl_Box(FL_DOWN_BOX, 0, 0, 0, 0, "");
+	Fl_Box* reaction;
+	Fl_Box* remainBombCountView;
 
 	Fl_Window* resultWindow = new Fl_Window(RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT);
 	Fl_Box* resultImage = new Fl_Box(MARGIN * 2, MARGIN, RESULT_IMG_SIZE, RESULT_IMG_SIZE);
@@ -68,9 +68,10 @@ public:
 	void initToolbar();
 	void initMine();
 	void removeMine();
-	void initWindowTitle();
+	void resetTimer();
+	void updateWindowTitle();
+	void updateToolbar(char = MINE_NULL);
 	void update();
-	void updateReaction(char);
 	void win();
 	void lose();
 

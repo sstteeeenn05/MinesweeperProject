@@ -36,10 +36,11 @@ void BoardWindow::easterAll(Fl_Color c) {
 
 void BoardWindow::closeAll() {
 	for (auto bw : objAddrList) delete bw;
-	PlaySound(L"audio\\funkytown.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
+	PlaySoundA("audio\\funkytown.wav", NULL, SND_LOOP | SND_ASYNC);
 }
 
 BoardWindow::~BoardWindow() {
+	removeMine();
 	delete board;
 	delete mainWindow;
 	delete resultWindow;
@@ -64,34 +65,31 @@ void BoardWindow::reload(int x, int y) {
 	if (playMode == PLAY_MODE_DEV) mainWindow->callback((Fl_Callback*)nullptr);
 	else mainWindow->callback([](Fl_Widget* w, void* args) {
 		delete (BoardWindow*)args;
-		PlaySound(L"audio\\funkytown.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
+		PlaySoundA("audio\\funkytown.wav", NULL, SND_LOOP | SND_ASYNC);
 	}, (void*)this);
 
-	mainWindow->show();
-	initWindowTitle();
 	initResultWindow();
+
+	mainWindow->show();
+	updateWindowTitle();
+	updateToolbar();
+	update();
+
 	objAddrList.insert(this);
-	PlaySound(L"audio\\amongus.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
-	startTime = clock();
+	PlaySoundA("audio\\amongus.wav", NULL, SND_LOOP | SND_ASYNC);
+	resetTimer();
 }
 
 void BoardWindow::initToolbar() {
-	timer->resize(MARGIN, MARGIN, (mainWindow->w() - MARGIN * 4 - TOOLBAR_HEIGHT) / 2, TOOLBAR_HEIGHT);
+	timer = new Fl_Timer(FL_VALUE_TIMER, MARGIN, MARGIN, (mainWindow->w() - MARGIN * 4 - TOOLBAR_HEIGHT) / 2, TOOLBAR_HEIGHT, "");
 	timer->direction(1);
-	timer->value(1LL << 16);
 	timer->labelfont(FL_SCREEN_BOLD);
-	timer->suspended(false);
 	timer->callback([](Fl_Widget* w, void*) {fl_alert(std::to_string(((Fl_Timer*)w)->value()).c_str()); });
-	reaction->resize(MARGIN * 2 + timer->w(), MARGIN, TOOLBAR_HEIGHT, TOOLBAR_HEIGHT);
-	reaction->image(IMG_REACT.at(MINE_NULL));
-	bombCountView->resize(MARGIN * 3 + timer->w() + reaction->w(), MARGIN, timer->w(), TOOLBAR_HEIGHT);
-	std::string *bombCount = new std::string(std::to_string(boardArgs.bombCount));
-	bombCountView->label(bombCount->c_str());
-	bombCountView->labelfont(FL_SCREEN_BOLD);
 
-	mainWindow->add(timer);
-	mainWindow->add(reaction);
-	mainWindow->add(bombCountView);
+	reaction = new Fl_Box(FL_UP_BOX, MARGIN * 2 + timer->w(), MARGIN, TOOLBAR_HEIGHT, TOOLBAR_HEIGHT, nullptr);
+
+	remainBombCountView = new Fl_Box(FL_DOWN_BOX, MARGIN * 3 + timer->w() + reaction->w(), MARGIN, timer->w(), TOOLBAR_HEIGHT, "");
+	remainBombCountView->labelfont(FL_SCREEN_BOLD);
 }
 
 void BoardWindow::initMine(){
@@ -108,7 +106,7 @@ void BoardWindow::initMine(){
 					Handler::execute("Leftclick" + title, [&] { mineArgs->board->leftClick(mineArgs->x, mineArgs->y); });
 				if (Fl::event_button() == FL_RIGHT_MOUSE)
 					Handler::execute("Rightclick" + title, [&] { mineArgs->board->rightClick(mineArgs->x, mineArgs->y); });
-				mineArgs->parent->updateReaction(mineArgs->parent->boardArgs.board[mineArgs->y][mineArgs->x]);
+				mineArgs->parent->updateToolbar(mineArgs->parent->boardArgs.board[mineArgs->y][mineArgs->x]);
 				mineArgs->parent->update();
 				BoardWindow::btnCallbackLock.unlock();
 			}, (void*)mineArgs);
@@ -130,16 +128,28 @@ void BoardWindow::removeMine() {
 	mineList.clear();
 }
 
-void BoardWindow::initWindowTitle() {
+void BoardWindow::resetTimer() {
+	timer->value(1LL << 16);
+	timer->suspended(false);
+	startTime = clock();
+}
+
+void BoardWindow::updateWindowTitle() {
 	std::ostringstream title("");
 	title << "Game (" << boardArgs.column << "x" << boardArgs.row << ") 0.0%" << std::endl;
 	mainWindow->label(title.str().c_str());
 }
 
-void BoardWindow::updateReaction(char value) {
+void BoardWindow::updateToolbar(char value) {
 	if (IMG_REACT.find(value) != IMG_REACT.end()) reaction->image(IMG_REACT.at(value));
 	else reaction->image(IMG_REACT.at(MINE_NULL));
 	reaction->redraw();
+
+	std::string remainCount = std::to_string(boardArgs.bombCount - boardArgs.flagCount);
+	remainBombCountView->label(remainCount.c_str());
+	remainBombCountView->redraw();
+
+	Fl::flush();
 }
 
 void BoardWindow::update() {
@@ -180,8 +190,10 @@ void BoardWindow::update() {
 				currentButton->deactivate();
 				break;
 		}
-		Fl::awake();
+		currentButton->redraw();
 	}
+
+	Fl::flush();
 
 	switch (boardArgs.status) {
 		case BOARD_STATUS_WIN:
@@ -200,7 +212,7 @@ void BoardWindow::update() {
 }
 
 void BoardWindow::win() {
-	PlaySound(L"audio\\win.wav", NULL, SND_ASYNC);
+	PlaySoundA("audio\\win.wav", NULL, SND_ASYNC);
 	Handler::execute("", [] {hout << "You win the game"; });
 	for (int i = 0; i < boardArgs.row; i++) {
 		for (int j = 0; j < boardArgs.column; j++) {
@@ -221,7 +233,7 @@ void BoardWindow::win() {
 }
 
 void BoardWindow::lose() {
-	PlaySound(L"audio\\boom.wav", NULL, SND_FILENAME | SND_ASYNC);
+	PlaySoundA("audio\\boom.wav", NULL, SND_ASYNC);
 	Handler::execute("", [] {hout << "You lose the game"; });
 	for (int i = 0; i < boardArgs.row; i++) {
 		for (int j = 0; j < boardArgs.column; j++) {
@@ -256,13 +268,13 @@ void BoardWindow::initResultVariables() {
 		{"Submit Score", {2, &BoardWindow::submitScore, (void*)this}},
 		{"Exit",{3, [](Fl_Widget* w,void* args) {
 			delete (BoardWindow*)args;
-			PlaySound(L"audio\\funkytown.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
+			PlaySoundA("audio\\funkytown.wav", NULL, SND_LOOP | SND_ASYNC);
 		}, (void*)this}}
 	};
 	if(playMode == PLAY_MODE_DEV) resultButtonList = {
 		{"Replay", {0, [](Fl_Widget* w, void* args) {
 			delete (BoardWindow*)args;
-			PlaySound(L"audio\\funkytown.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
+			PlaySoundA("audio\\funkytown.wav", NULL, SND_LOOP | SND_ASYNC);
 		},(void*)this}},
 		{"Quit",{1,[](Fl_Widget* w,void* args) {
 			Handler::execute("Quit",[] {});
@@ -294,15 +306,14 @@ void BoardWindow::createResultButton() {
 void BoardWindow::playAgain(Fl_Widget* w, void* args) {
 	auto bw = (BoardWindow*)args;
 	bw->board->maskBoard();
-	bw->initWindowTitle();
+	bw->updateWindowTitle();
+	bw->updateToolbar();
 	bw->update();
-	bw->timer->value(1LL << 16);
-	bw->startTime = clock();
-	bw->reaction->image(IMG_REACT.at(MINE_NULL));
 	bw->mainWindow->redraw();
 	bw->resultWindow->hide();
 	bw->board->startGame();
-	PlaySound(L"audio\\amongus.wav", NULL, SND_LOOP | SND_FILENAME | SND_ASYNC);
+	PlaySoundA("audio\\amongus.wav", NULL, SND_LOOP | SND_ASYNC);
+	bw->resetTimer();
 }
 
 void BoardWindow::newGame(Fl_Widget* w, void* args) {
