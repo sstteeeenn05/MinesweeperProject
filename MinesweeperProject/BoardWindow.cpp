@@ -104,9 +104,9 @@ void BoardWindow::initMine(){
 				BoardWindow::btnCallbackLock.lock();
 				std::string title = (std::stringstream(" ") << mineArgs->y << " " << mineArgs->x).str();
 				if (Fl::event_button() == FL_LEFT_MOUSE)
-					Handler::execute("Leftclick" + title, [&] { mineArgs->board->leftClick(mineArgs->x, mineArgs->y); });
+					Handler::execute("Leftclick " + title, [&] { mineArgs->board->leftClick(mineArgs->x, mineArgs->y); });
 				if (Fl::event_button() == FL_RIGHT_MOUSE)
-					Handler::execute("Rightclick" + title, [&] { mineArgs->board->rightClick(mineArgs->x, mineArgs->y); });
+					Handler::execute("Rightclick " + title, [&] { mineArgs->board->rightClick(mineArgs->x, mineArgs->y); });
 				mineArgs->parent->updateToolbar(mineArgs->parent->boardArgs.board[mineArgs->y][mineArgs->x]);
 				mineArgs->parent->update();
 				BoardWindow::btnCallbackLock.unlock();

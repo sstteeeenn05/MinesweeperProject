@@ -138,7 +138,6 @@
     <ClInclude Include="Handler.h" />
     <ClInclude Include="DataType.h" />
     <ClInclude Include="HomeWindow.h" />
-    <ClInclude Include="RankWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
@@ -146,7 +145,6 @@
     <ClCompile Include="Handler.cpp" />
     <ClCompile Include="HomeWindow.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="RankWindow.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -15,8 +15,6 @@
 
 #include "Board.h"
 #include "BoardWindow.h"
-#include "RankWindow.h"
-
 #include "FL/Fl.h"
 #include "FL/fl_ask.H"
 #include "FL/Fl_Button.h"

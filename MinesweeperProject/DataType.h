@@ -1,5 +1,12 @@
 #pragma once
 #pragma warning(disable:4996)
+#pragma comment(lib, "fltkd.lib")
+#pragma comment(lib, "fltkformsd.lib")
+#pragma comment(lib, "fltkgld.lib")
+#pragma comment(lib, "fltkimagesd.lib")
+#pragma comment(lib, "fltkjpegd.lib")
+#pragma comment(lib, "fltkpngd.lib")
+#pragma comment(lib, "fltkzlibd.lib")
 
 #include <string>
 #include <vector>
