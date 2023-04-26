@@ -451,7 +451,6 @@ void HomeWindow::changeVolume(Fl_Widget* w, void* args) {
 }
 
 void HomeWindow::easterEggCallback(Fl_Widget* w, void* args){
-	uchar r, g, b;
 	uchar color[3] = { rand() % 128 ,rand() % 128 ,rand() % 128 };
 	color[rand() % 3] += 128;
 	Fl_Color c = fl_rgb_color(color[0], color[1], color[2]);

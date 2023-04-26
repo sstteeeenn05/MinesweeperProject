@@ -150,7 +150,7 @@ void BoardWindow::updateToolbar(char value) {
 	remainBombCountView->label(remainCount.c_str());
 	remainBombCountView->redraw();
 
-	Fl::flush();
+	Fl::check();
 }
 
 void BoardWindow::update() {
@@ -194,7 +194,7 @@ void BoardWindow::update() {
 		currentButton->redraw();
 	}
 
-	Fl::flush();
+	Fl::check();
 
 	switch (boardArgs.status) {
 		case BOARD_STATUS_WIN:
@@ -228,7 +228,7 @@ void BoardWindow::win() {
 			currentButton->color(FL_GREEN);
 			currentButton->selection_color(FL_GREEN);
 			currentButton->redraw();
-			while (clock() - start < CLOCKS_PER_SEC / 200) Fl::flush();
+			while (clock() - start < CLOCKS_PER_SEC / 200) Fl::check();
 		}
 	}
 }
@@ -247,7 +247,7 @@ void BoardWindow::lose() {
 			currentButton->color(FL_RED);
 			currentButton->selection_color(FL_RED);
 			currentButton->redraw();
-			while (clock() - start < CLOCKS_PER_SEC / 200) Fl::flush();
+			while (clock() - start < CLOCKS_PER_SEC / 200) Fl::check();
 		}
 	}
 }
@@ -391,4 +391,5 @@ void BoardWindow::openResultWindow() {
 	}
 	resultWindow->hotspot(0, 0);
 	resultWindow->show();
+	Fl::check();
 }
